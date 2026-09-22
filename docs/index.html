@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto ICT Sweep+CISD - Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: #0d1117; color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    background: #161b22; padding: 14px 16px; border-bottom: 1px solid #30363d;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header .sub { color: #8b949e; font-size: 12px; margin-top: 2px; }
+  .tabs { display: flex; gap: 4px; padding: 8px 16px; background: #161b22; border-bottom: 1px solid #30363d; overflow-x: auto; }
+  .tab { padding: 8px 14px; border-radius: 6px; background: #21262d; color: #8b949e; font-size: 13px; cursor: pointer; white-space: nowrap; border: none; }
+  .tab.active { background: #1f6feb; color: white; }
+  .panel { display: none; padding: 12px; }
+  .panel.active { display: block; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+  .stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-box .val { font-size: 22px; font-weight: 600; }
+  .stat-box .lbl { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; font-size: 13px; width: 100%; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #21262d; }
+  th { color: #8b949e; font-weight: 500; }
+  .win { color: #3fb950; font-weight: 600; }
+  .loss { color: #f85149; font-weight: 600; }
+  .open { color: #d29922; font-weight: 600; }
+  .status-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #21262d; }
+  .status-row:last-child { border-bottom: none; }
+  .status-row .lbl { color: #8b949e; }
+  #tv_chart { height: 460px; }
+  .note { font-size: 11px; color: #8b949e; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ICT Sweep + CISD — Crypto Futures Dashboard</h1>
+  <div class="sub">28 coin final &middot; Bybit &middot; risiko 1% &middot; update tiap ~10-15 menit</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="chart">Chart</button>
+  <button class="tab" data-tab="sinyal">Sinyal & Statistik</button>
+  <button class="tab" data-tab="berita">Berita</button>
+</div>
+
+<div id="tab-chart" class="panel active">
+  <div class="card">
+    <select id="symbolPicker"></select>
+    <div class="tradingview-widget-container">
+      <div id="tv_chart"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-sinyal" class="panel">
+  <div class="card">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-box"><div class="val" id="s_total">-</div><div class="lbl">Total Trade</div></div>
+      <div class="stat-box"><div class="val" id="s_wr">-</div><div class="lbl">Win Rate</div></div>
+      <div class="stat-box"><div class="val" id="s_pf">-</div><div class="lbl">Profit Factor</div></div>
+      <div class="stat-box"><div class="val" id="s_open">-</div><div class="lbl">Sedang Open</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="status-row"><span class="lbl">Coin dipantau</span><span id="st_coins">-</span></div>
+    <div class="status-row"><span class="lbl">Bot mulai</span><span id="st_start">-</span></div>
+    <div class="status-row"><span class="lbl">Cek terakhir (WITA)</span><span id="st_heartbeat">-</span></div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">20 Sinyal Terakhir</h3>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Coin</th><th>Arah</th><th>Entry</th><th>Status</th><th>R</th></tr></thead>
+      <tbody id="recentBody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div id="tab-berita" class="panel">
+  <div class="card">
+    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">Berita Crypto</h3>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+      { "feedMode": "market", "market": "crypto", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
+      </script>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">Berita Forex</h3>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+      { "feedMode": "market", "market": "forex", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
+      </script>
+    </div>
+  </div>
+</div>
+
+<script>
+  const COINS = ["1000PEPEUSDT", "AAVEUSDT", "ARBUSDT", "ASTERUSDT", "BNBUSDT", "DOTUSDT", "ENAUSDT",
+    "ETCUSDT", "HBARUSDT", "HYPEUSDT", "ICPUSDT", "JSTUSDT", "KASUSDT", "LINKUSDT",
+    "LITUSDT", "LTCUSDT", "MNTUSDT", "MORPHOUSDT", "POLUSDT", "SHIB1000USDT", "SKYUSDT",
+    "SUIUSDT", "TRXUSDT", "VVVUSDT", "WLDUSDT", "WLFIUSDT", "XLMUSDT", "XRPUSDT"];
+  const picker = document.getElementById('symbolPicker');
+  COINS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = 'BYBIT:' + c + '.P';
+    opt.text = c;
+    picker.appendChild(opt);
+  });
+
+  let tvWidget = null;
+  function loadChart(symbol) {
+    document.getElementById('tv_chart').innerHTML = '';
+    tvWidget = new TradingView.widget({
+      "autosize": true,
+      "symbol": symbol,
+      "interval": "1",
+      "timezone": "Asia/Makassar",
+      "theme": "dark",
+      "style": "1",
+      "locale": "id",
+      "toolbar_bg": "#161b22",
+      "enable_publishing": false,
+      "allow_symbol_change": true,
+      "hide_side_toolbar": false,
+      "container_id": "tv_chart"
+    });
+  }
+  picker.addEventListener('change', () => loadChart(picker.value));
+
+  function initChartWhenReady() {
+    if (window.TradingView) {
+      loadChart(picker.value);
+    } else {
+      setTimeout(initChartWhenReady, 200);
+    }
+  }
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'chart' && !tvWidget) initChartWhenReady();
+    });
+  });
+
+  function toWita(isoUtc) {
+    if (!isoUtc) return '-';
+    const d = new Date(isoUtc + 'Z');
+    const wita = new Date(d.getTime() + 8 * 3600 * 1000);
+    return wita.toISOString().replace('T', ' ').slice(0, 16) + ' WITA';
+  }
+
+  async function loadStats() {
+    try {
+      const [sig, status] = await Promise.all([
+        fetch('./signals.json?_=' + Date.now()).then(r => r.json()),
+        fetch('./status.json?_=' + Date.now()).then(r => r.json())
+      ]);
+      document.getElementById('s_total').textContent = sig.total ?? '-';
+      document.getElementById('s_wr').textContent = sig.win_rate != null ? sig.win_rate + '%' : '-';
+      document.getElementById('s_pf').textContent = sig.profit_factor ?? '-';
+      document.getElementById('s_open').textContent = sig.open ?? '0';
+
+      document.getElementById('st_coins').textContent = status.coins_monitored + ' coin';
+      document.getElementById('st_start').textContent = status.start_date ?? '-';
+      document.getElementById('st_heartbeat').textContent = toWita(status.last_check_utc);
+
+      const tbody = document.getElementById('recentBody');
+      tbody.innerHTML = '';
+      (sig.recent || []).forEach(row => {
+        const tr = document.createElement('tr');
+        const dir = row.dir == 1 ? 'BUY' : 'SELL';
+        const statusClass = row.status === 'WIN' ? 'win' : row.status === 'LOSS' ? 'loss' : 'open';
+        tr.innerHTML = `<td>${row.symbol}</td><td>${dir}</td><td>${row.entry}</td>
+          <td class="${statusClass}">${row.status}</td><td>${row.R !== '' ? Number(row.R).toFixed(2) : '-'}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (e) { console.error(e); }
+  }
+  loadStats();
+  setInterval(loadStats, 60000);
+
+  initChartWhenReady();
+</script>
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+</body>
+</html>

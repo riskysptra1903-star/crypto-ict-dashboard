@@ -1,0 +1,36 @@
+name: Cek Sinyal ICT Sweep+CISD
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Jalankan 1x cek sinyal
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python check_once.py
+
+      - name: Commit & push hasil (trade_log, state, docs)
+        run: |
+          git config user.name "bot-ict-sweep-cisd"
+          git config user.email "actions@github.com"
+          git add trade_log.csv state.json docs/signals.json docs/status.json
+          git diff --quiet --cached || git commit -m "Update sinyal otomatis [skip ci]"
+          git push
