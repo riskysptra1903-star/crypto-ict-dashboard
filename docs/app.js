@@ -672,6 +672,45 @@ function renderHistoricalImpact() {
 }
 
 /* ============================================================
+   BERITA FUNDAMENTAL PER COIN WATCHLIST
+   Cocokkan judul RSS asli (CoinDesk + CoinTelegraph) dengan nama coin --
+   APA ADANYA, tanpa skor akurasi/prediksi apapun (fabrikasi dilarang).
+   ============================================================ */
+async function loadFundamentalNews() {
+  const el = document.getElementById("fundamentalNewsBody");
+  if (!el) return;
+  try {
+    const feeds = ["https://www.coindesk.com/arc/outboundfeeds/rss/", "https://cointelegraph.com/rss"];
+    const results = await Promise.all(feeds.map(f =>
+      fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f)).catch(() => null)
+    ));
+    const allItems = [];
+    results.forEach(r => { if (r && r.items) allItems.push(...r.items); });
+
+    const matches = [];
+    COINS.forEach(sym => {
+      const base = baseSymbol(sym);
+      const re = new RegExp("\\b" + base + "\\b", "i");
+      allItems.forEach(item => {
+        if (re.test(item.title)) matches.push({ coin: base, title: item.title, link: item.link, date: item.pubDate });
+      });
+    });
+
+    if (matches.length === 0) {
+      el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Belum ada berita terbaru dari CoinDesk/CoinTelegraph yang menyebut coin di watchlist ini secara spesifik.</span></div>`;
+    } else {
+      el.innerHTML = matches.slice(0, 15).map(m => `
+        <div class="mini-row">
+          <span><b>${m.coin}</b> — <a href="${m.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">${m.title}</a></span>
+        </div>`).join("");
+    }
+    setUpdated("fundamentalUpdated", Date.now());
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat berita fundamental.</span></div>`;
+  }
+}
+
+/* ============================================================
    TRENDING COINS (CoinGecko /search/trending)
    ============================================================ */
 async function loadTrendingCoins() {
@@ -808,8 +847,14 @@ function renderJournal() {
 
 /* ============================================================
    LIGHTWEIGHT CHARTS: candlestick + overlay sinyal (Entry/SL/TP)
+   + overlay indikator ICT Sweep+CISD (Swing High/Low + sweep event)
    ============================================================ */
 let lwChart = null, lwSeries = null, lwCurrentSymbol = "BYBIT:1000PEPEUSDT.P", lwCurrentInterval = "1";
+let lwPriceLines = [];
+function lwClearPriceLines() {
+  lwPriceLines.forEach(pl => { try { lwSeries.removePriceLine(pl); } catch (e) {} });
+  lwPriceLines = [];
+}
 async function lwFetchKlines(symbolBybit, interval) {
   const limit = 300;
   const data = await fetchJson(`${BYBIT_BASE}/v5/market/kline?category=linear&symbol=${symbolBybit}&interval=${interval}&limit=${limit}`);
@@ -820,40 +865,107 @@ async function lwFetchKlines(symbolBybit, interval) {
   })).reverse();
 }
 async function lwOverlaySignals(symbolBybit) {
-  if (!lwChart) return;
+  const markers = [];
   try {
     const sig = await fetchJson("./signals.json?_=" + Date.now());
     const trades = (sig.recent || []).filter(r => r.symbol === symbolBybit);
     trades.forEach(tr => {
-      const entryTime = Math.floor(new Date(tr.entry_time.replace(" ", "T") + "Z").getTime() / 1000);
-      const color = tr.dir == 1 ? "#f0b429" : "#f0b429";
-      const priceLines = [
-        { price: parseFloat(tr.entry), color: "#f0b429", title: "Entry" },
-      ];
+      const priceLines = [{ price: parseFloat(tr.entry), color: "#f0b429", title: "Entry" }];
       if (tr.sl) priceLines.push({ price: parseFloat(tr.sl), color: "#f0526b", title: "SL" });
       if (tr.tp) priceLines.push({ price: parseFloat(tr.tp), color: "#26c281", title: "TP" });
       priceLines.forEach(pl => {
-        lwSeries.createPriceLine({ price: pl.price, color: pl.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: pl.title });
+        lwPriceLines.push(lwSeries.createPriceLine({ price: pl.price, color: pl.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: pl.title }));
+      });
+      markers.push({
+        time: Math.floor(new Date(tr.entry_time.replace(" ", "T") + "Z").getTime() / 1000),
+        position: tr.dir == 1 ? "belowBar" : "aboveBar",
+        color: tr.dir == 1 ? "#26c281" : "#f0526b",
+        shape: tr.dir == 1 ? "arrowUp" : "arrowDown",
+        text: tr.dir == 1 ? "BUY" : "SELL",
       });
     });
-    const markers = trades.map(tr => ({
-      time: Math.floor(new Date(tr.entry_time.replace(" ", "T") + "Z").getTime() / 1000),
-      position: tr.dir == 1 ? "belowBar" : "aboveBar",
-      color: tr.dir == 1 ? "#26c281" : "#f0526b",
-      shape: tr.dir == 1 ? "arrowUp" : "arrowDown",
-      text: tr.dir == 1 ? "BUY" : "SELL",
-    }));
-    if (markers.length) lwSeries.setMarkers(markers);
-  } catch (e) { /* diamkan, chart tetap tampil tanpa overlay */ }
+  } catch (e) { /* diamkan, chart tetap tampil tanpa overlay sinyal */ }
+  return markers;
 }
+
+// ---- Port logika indikator ICT Sweep+CISD (dari ict_sweep_cisd_final.py) ke JS ----
+function detectFractalSwingsJs(highs, lows, n = 2) {
+  const len = highs.length;
+  const sh = new Array(len).fill(null);
+  const sl = new Array(len).fill(null);
+  for (let i = n; i < len - n; i++) {
+    const wh = highs.slice(i - n, i + n + 1);
+    const wl = lows.slice(i - n, i + n + 1);
+    const maxH = Math.max(...wh), minL = Math.min(...wl);
+    if (highs[i] === maxH && wh.indexOf(maxH) === n) sh[i + n] = highs[i];
+    if (lows[i] === minL && wl.indexOf(minL) === n) sl[i + n] = lows[i];
+  }
+  return { sh, sl };
+}
+function findSweepEventsJs(h1Bars) {
+  const highs = h1Bars.map(b => b.high), lows = h1Bars.map(b => b.low), closes = h1Bars.map(b => b.close);
+  const { sh, sl } = detectFractalSwingsJs(highs, lows, 2);
+  let lastSH = null, lastSL = null;
+  const events = [];
+  const startIdx = Math.min(30, h1Bars.length - 1);
+  for (let i = startIdx; i < h1Bars.length; i++) {
+    if (sh[i] !== null) lastSH = sh[i];
+    if (sl[i] !== null) lastSL = sl[i];
+    if (lastSH !== null && highs[i] > lastSH && closes[i] < lastSH) {
+      events.push({ time: h1Bars[i].time, dir: -1, level: lastSH });
+    } else if (lastSL !== null && lows[i] < lastSL && closes[i] > lastSL) {
+      events.push({ time: h1Bars[i].time, dir: 1, level: lastSL });
+    }
+  }
+  return { events, lastSH, lastSL };
+}
+async function lwOverlayIndicator(symbolBybit) {
+  const markers = [];
+  try {
+    const data = await fetchJson(`${BYBIT_BASE}/v5/market/kline?category=linear&symbol=${symbolBybit}&interval=60&limit=200`);
+    const list = (data.result && data.result.list) || [];
+    const h1Bars = list.map(r => ({
+      time: Math.floor(parseInt(r[0]) / 1000), open: parseFloat(r[1]),
+      high: parseFloat(r[2]), low: parseFloat(r[3]), close: parseFloat(r[4]),
+    })).reverse();
+    if (h1Bars.length < 35) return markers;
+    const { events, lastSH, lastSL } = findSweepEventsJs(h1Bars);
+
+    if (lastSH) lwPriceLines.push(lwSeries.createPriceLine({ price: lastSH, color: "#8b93a7", lineWidth: 1, lineStyle: 3, axisLabelVisible: true, title: "Swing High" }));
+    if (lastSL) lwPriceLines.push(lwSeries.createPriceLine({ price: lastSL, color: "#8b93a7", lineWidth: 1, lineStyle: 3, axisLabelVisible: true, title: "Swing Low" }));
+
+    const indStatus = document.getElementById("chartIndicatorStatus");
+    if (indStatus) {
+      indStatus.innerHTML = `Swing High H1: <b>${lastSH ? fmtNum(lastSH, lastSH < 1 ? 6 : 2) : "-"}</b> &nbsp;|&nbsp; Swing Low H1: <b>${lastSL ? fmtNum(lastSL, lastSL < 1 ? 6 : 2) : "-"}</b> &nbsp;|&nbsp; Sweep event terdeteksi (200 candle H1 terakhir): <b>${events.length}</b>`;
+    }
+
+    events.slice(-30).forEach(e => {
+      markers.push({
+        time: e.time,
+        position: e.dir === -1 ? "aboveBar" : "belowBar",
+        color: "#8b93a7",
+        shape: e.dir === -1 ? "arrowDown" : "arrowUp",
+        text: "Sweep",
+      });
+    });
+  } catch (e) { /* diamkan, chart tetap tampil tanpa overlay indikator */ }
+  return markers;
+}
+
 async function lwLoadSymbol(tvSymbol) {
   lwCurrentSymbol = tvSymbol;
   const bybitSym = tvSymbol.replace("BYBIT:", "").replace(".P", "");
   if (!lwSeries) return;
   try {
+    lwClearPriceLines();
     const klines = await lwFetchKlines(bybitSym, lwCurrentInterval);
     lwSeries.setData(klines);
-    await lwOverlaySignals(bybitSym);
+    const [signalMarkers, indicatorMarkers] = await Promise.all([
+      lwOverlaySignals(bybitSym),
+      lwOverlayIndicator(bybitSym),
+    ]);
+    const allMarkers = [...indicatorMarkers, ...signalMarkers].sort((a, b) => a.time - b.time);
+    if (allMarkers.length) lwSeries.setMarkers(allMarkers);
     lwChart.timeScale().fitContent();
   } catch (e) {
     console.error("gagal load chart", e);

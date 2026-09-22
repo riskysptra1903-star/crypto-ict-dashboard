@@ -295,17 +295,24 @@
       <button data-tf="60">1h</button>
       <button data-tf="240">4h</button>
       <button data-tf="D">1D</button>
-      <button id="chartFullscreenBtn" style="margin-left:auto;">⛶ Fullscreen</button>
+      <button id="chartFullscreenBtn" style="margin-left:auto;">⛶ Layar Penuh</button>
     </div>
     <div id="lwChartContainer">
       <div id="lwChart" style="height:480px;"></div>
     </div>
-    <div class="note-box">Garis kuning/merah/hijau = Entry/SL/TP dari sinyal bot (dari signals.json), segitiga = titik BUY/SELL. Chart ini self-hosted (TradingView Lightweight Charts) supaya bisa overlay data sinyal sendiri tanpa perlu publish strategi ke publik.</div>
+    <div class="note-box" id="chartIndicatorStatus" style="margin-top:10px;">Memuat status indikator...</div>
+    <div class="note-box">Garis kuning/merah/hijau = Entry/SL/TP dari sinyal bot (dari signals.json), segitiga hijau/merah = titik BUY/SELL (sinyal beneran), segitiga abu-abu "Sweep" = event sweep terdeteksi (indikator ICT Sweep+CISD, sama seperti yang dipakai bot), garis putus-putus abu-abu = Swing High/Low H1 saat ini. Chart ini self-hosted (TradingView Lightweight Charts) supaya bisa overlay data sinyal sendiri tanpa perlu publish strategi ke publik.</div>
   </div>
 </div>
 
 <!-- CRYPTO -->
 <div id="tab-crypto" class="panel">
+  <div class="card">
+    <h3>Berita Fundamental — Coin Watchlist</h3>
+    <div class="note-box">Berita APA ADANYA dari CoinDesk & CoinTelegraph yang menyebut nama coin di watchlist kita — BUKAN prediksi/rekomendasi, BUKAN klaim akurasi. Cuma info yang sudah benar-benar dipublikasikan, kamu yang nilai relevansinya.</div>
+    <span class="updated-tag" id="fundamentalUpdated">terakhir update: -</span>
+    <div id="fundamentalNewsBody" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
+  </div>
   <div class="card">
     <h3>Trending Coins (24h)</h3>
     <div class="warn-box">Coin trending/gainer tinggi seringkali volatil ekstrem dan rawan pump-and-dump, terutama meme coin market cap kecil — riset mendalam sebelum entry, jangan FOMO.</div>
@@ -721,7 +728,7 @@
 
   const tabLoaders = {
     chart: () => window.initLwChart && window.initLwChart(),
-    crypto: () => { loadCryptoTab(); loadTrendingCoins(); },
+    crypto: () => { loadCryptoTab(); loadTrendingCoins(); loadFundamentalNews(); },
     futures: () => loadFuturesTab(),
     forex: () => loadForexTab(),
     sentiment: () => loadSentimentTab(),
