@@ -1,0 +1,20 @@
+{
+  "_keterangan": "File ini diupdate MANUAL tiap bulan (bukan otomatis dari bot). Update angka di monthly_equity dan winrate_per_coin sesuai hasil backtest/live terbaru.",
+  "monthly_equity": [
+    { "month": "2024-12", "balance": 1500000 },
+    { "month": "2025-01", "balance": 1650000 },
+    { "month": "2025-02", "balance": 1720000 },
+    { "month": "2025-03", "balance": 1550000 },
+    { "month": "2025-04", "balance": 1480000 },
+    { "month": "2025-05", "balance": 1690000 },
+    { "month": "2025-06", "balance": 2100000 }
+  ],
+  "winrate_per_coin": [
+    { "coin": "ENAUSDT", "wr": 40.0, "trades": 5 },
+    { "coin": "SHIB1000USDT", "wr": 55.0, "trades": 4 },
+    { "coin": "XRPUSDT", "wr": 30.0, "trades": 6 },
+    { "coin": "LITUSDT", "wr": 25.0, "trades": 4 },
+    { "coin": "POLUSDT", "wr": 20.0, "trades": 5 },
+    { "coin": "HYPEUSDT", "wr": 45.0, "trades": 3 }
+  ]
+}
