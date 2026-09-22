@@ -3,57 +3,110 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto ICT Sweep+CISD - Dashboard</title>
+<title>ICT Sweep + CISD — Crypto Futures Dashboard</title>
 <style>
+  :root{
+    --bg:#0b0e14; --surface:#131722; --surface2:#1a1f2b; --border:#242938;
+    --text:#e8ebf1; --text-dim:#8b93a7; --accent:#4f8cff; --accent-dim:#2a3a5c;
+    --green:#26c281; --red:#f0526b; --amber:#f0b429;
+  }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 0;
-    background: #0d1117; color: #e6edf3;
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   header {
-    background: #161b22; padding: 14px 16px; border-bottom: 1px solid #30363d;
-    position: sticky; top: 0; z-index: 10;
+    background: linear-gradient(180deg, var(--surface2), var(--surface));
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
   }
-  header h1 { margin: 0; font-size: 18px; }
-  header .sub { color: #8b949e; font-size: 12px; margin-top: 2px; }
-  .tabs { display: flex; gap: 4px; padding: 8px 16px; background: #161b22; border-bottom: 1px solid #30363d; overflow-x: auto; }
-  .tab { padding: 8px 14px; border-radius: 6px; background: #21262d; color: #8b949e; font-size: 13px; cursor: pointer; white-space: nowrap; border: none; }
-  .tab.active { background: #1f6feb; color: white; }
-  .panel { display: none; padding: 12px; }
+  header .title-block h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+  header .title-block .sub { color: var(--text-dim); font-size: 11.5px; margin-top: 3px; }
+  .tg-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #229ED9; color: white; text-decoration: none;
+    padding: 8px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+    white-space: nowrap; transition: opacity .15s;
+  }
+  .tg-btn:hover { opacity: .85; }
+  nav.tabs {
+    display: flex; gap: 6px; padding: 10px 14px; background: var(--surface);
+    border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 66px; z-index: 19;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 16px; border-radius: 8px; background: transparent; color: var(--text-dim);
+    font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; border: 1px solid transparent;
+    transition: all .15s; display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { background: var(--surface2); color: var(--text); }
+  .tab.active { background: var(--accent-dim); color: #cddcff; border-color: #35508a; }
+  .panel { display: none; padding: 14px; max-width: 900px; margin: 0 auto; }
   .panel.active { display: block; }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card h3 { margin: 0 0 12px; font-size: 13px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
   .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
-  .stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; text-align: center; }
-  .stat-box .val { font-size: 22px; font-weight: 600; }
-  .stat-box .lbl { font-size: 11px; color: #8b949e; margin-top: 4px; }
-  select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; font-size: 13px; width: 100%; margin-bottom: 10px; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #21262d; }
-  th { color: #8b949e; font-weight: 500; }
-  .win { color: #3fb950; font-weight: 600; }
-  .loss { color: #f85149; font-weight: 600; }
-  .open { color: #d29922; font-weight: 600; }
-  .status-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #21262d; }
+  .stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .stat-box .val { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-box .lbl { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  select {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 13.5px; width: 100%; margin-bottom: 12px; font-weight: 500;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .win { color: var(--green); font-weight: 700; }
+  .loss { color: var(--red); font-weight: 700; }
+  .open { color: var(--amber); font-weight: 700; }
+  .status-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
   .status-row:last-child { border-bottom: none; }
-  .status-row .lbl { color: #8b949e; }
-  #tv_chart { height: 460px; }
-  .note { font-size: 11px; color: #8b949e; margin-top: 8px; }
+  .status-row .lbl { color: var(--text-dim); }
+  #tv_chart { height: 460px; border-radius: 10px; overflow: hidden; }
+  iframe.embed { width: 100%; border: 0; border-radius: 10px; display: block; }
+  .step {
+    display: flex; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .step .num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim);
+    color: #cddcff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  }
+  .step .txt h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .step .txt p { margin: 0; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .legend-line { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .legend-line .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .note-box {
+    background: var(--accent-dim); border: 1px solid #35508a; border-radius: 10px;
+    padding: 12px 14px; font-size: 12.5px; color: #cddcff; line-height: 1.6; margin-top: 8px;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>ICT Sweep + CISD — Crypto Futures Dashboard</h1>
-  <div class="sub">28 coin final &middot; Bybit &middot; risiko 1% &middot; update tiap ~10-15 menit</div>
+  <div class="title-block">
+    <h1>ICT Sweep + CISD — Crypto Futures</h1>
+    <div class="sub">28 coin final · Bybit · risiko 1% · update tiap ~10-15 menit</div>
+  </div>
+  <a class="tg-btn" href="https://t.me/crypto_ict_signal_bot" target="_blank" rel="noopener">
+    ✈ Buka Telegram
+  </a>
 </header>
 
-<div class="tabs">
-  <button class="tab active" data-tab="chart">Chart</button>
-  <button class="tab" data-tab="sinyal">Sinyal & Statistik</button>
-  <button class="tab" data-tab="berita">Berita</button>
-</div>
+<nav class="tabs">
+  <button class="tab active" data-tab="chart">📈 Chart</button>
+  <button class="tab" data-tab="bubbles">🫧 Bubbles</button>
+  <button class="tab" data-tab="sinyal">📊 Sinyal</button>
+  <button class="tab" data-tab="berita">📰 Berita</button>
+  <button class="tab" data-tab="panduan">🎓 Panduan</button>
+</nav>
 
 <div id="tab-chart" class="panel active">
   <div class="card">
@@ -62,6 +115,13 @@
       <div id="tv_chart"></div>
     </div>
   </div>
+</div>
+
+<div id="tab-bubbles" class="panel">
+  <div class="card" style="padding:0; overflow:hidden;">
+    <iframe class="embed" style="height:640px;" src="https://cryptobubbles.net/"></iframe>
+  </div>
+  <div class="note-box">Ukuran bubble = besar market cap, warna hijau/merah = naik/turun harga. Bagus buat lihat sekilas coin mana yang lagi rame gerak hari ini.</div>
 </div>
 
 <div id="tab-sinyal" class="panel">
@@ -74,12 +134,13 @@
     </div>
   </div>
   <div class="card">
+    <h3>Status Bot</h3>
     <div class="status-row"><span class="lbl">Coin dipantau</span><span id="st_coins">-</span></div>
     <div class="status-row"><span class="lbl">Bot mulai</span><span id="st_start">-</span></div>
     <div class="status-row"><span class="lbl">Cek terakhir (WITA)</span><span id="st_heartbeat">-</span></div>
   </div>
   <div class="card">
-    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">20 Sinyal Terakhir</h3>
+    <h3>20 Sinyal Terakhir</h3>
     <div style="overflow-x:auto;">
     <table>
       <thead><tr><th>Coin</th><th>Arah</th><th>Entry</th><th>Status</th><th>R</th></tr></thead>
@@ -91,7 +152,16 @@
 
 <div id="tab-berita" class="panel">
   <div class="card">
-    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">Berita Crypto</h3>
+    <h3>Dunia (Makro/Global)</h3>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+      { "feedMode": "all_symbols", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
+      </script>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Crypto</h3>
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
@@ -100,13 +170,55 @@
     </div>
   </div>
   <div class="card">
-    <h3 style="margin-top:0;font-size:14px;color:#8b949e;">Berita Forex</h3>
+    <h3>Forex</h3>
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
       { "feedMode": "market", "market": "forex", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
       </script>
     </div>
+  </div>
+</div>
+
+<div id="tab-panduan" class="panel">
+  <div class="card">
+    <h3>Cara Baca Sinyal</h3>
+    <div class="legend-line"><span class="dot" style="background:#f0b429;"></span> Garis kuning "Entry" — harga masuk posisi</div>
+    <div class="legend-line"><span class="dot" style="background:#f0526b;"></span> Garis merah "SL" — batas rugi maksimal</div>
+    <div class="legend-line"><span class="dot" style="background:#26c281;"></span> Garis hijau "TP" — target untung (2,5x jarak SL)</div>
+    <div class="legend-line"><span class="dot" style="background:#f0b429; border-radius:50%;"></span> Segitiga hijau/merah di chart — titik BUY/SELL</div>
+  </div>
+  <div class="card">
+    <h3>Step by Step Eksekusi</h3>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="txt"><h4>Tunggu notifikasi</h4><p>Cek Telegram atau tab Chart — jangan buka posisi kalau belum ada sinyal BUY/SELL yang jelas.</p></div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="txt"><h4>Catat Entry, SL, TP</h4><p>Ambil 3 angka ini dari pesan Telegram atau label di chart.</p></div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="txt"><h4>Buka Bybit Futures</h4><p>Pilih coin yang sama di tab USDT Perpetual (bukan Spot).</p></div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="txt"><h4>Set leverage kecil</h4><p>1x-2x saja, jangan tinggi-tinggi walau diizinkan lebih.</p></div>
+    </div>
+    <div class="step">
+      <div class="num">5</div>
+      <div class="txt"><h4>Hitung ukuran posisi (risiko 1%)</h4><p>Uang yang boleh hilang = 1% x saldo. Ukuran posisi = uang itu ÷ jarak SL(%) x 100.</p></div>
+    </div>
+    <div class="step">
+      <div class="num">6</div>
+      <div class="txt"><h4>Entry market + pasang SL/TP</h4><p>Masuk di harga sekarang (bukan harga acuan lama), langsung pasang SL dan TP.</p></div>
+    </div>
+    <div class="step">
+      <div class="num">7</div>
+      <div class="txt"><h4>Diamkan sampai selesai</h4><p>Jangan close manual karena panik/serakah — biarkan SL/TP yang menutup otomatis.</p></div>
+    </div>
+    <div class="note-box">Win rate strategi ini ~34% dengan RR 1:2,5 — dari 10 sinyal biasanya cuma 3-4 menang, tapi untungnya jauh lebih besar dari ruginya. Kalah beruntun 2-3x itu normal, bukan tanda sinyal salah.</div>
   </div>
 </div>
 
@@ -134,7 +246,7 @@
       "theme": "dark",
       "style": "1",
       "locale": "id",
-      "toolbar_bg": "#161b22",
+      "toolbar_bg": "#131722",
       "enable_publishing": false,
       "allow_symbol_change": true,
       "hide_side_toolbar": false,
