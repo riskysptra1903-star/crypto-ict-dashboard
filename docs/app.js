@@ -507,10 +507,404 @@ async function loadBreakingTicker() {
 }
 
 /* ============================================================
+   UTIL: count-up animation untuk angka penting
+   ============================================================ */
+function countUpText(el, finalText, durationMs = 700) {
+  const match = finalText.match(/-?[\d.,]+/);
+  if (!match) { el.textContent = finalText; return; }
+  const numStr = match[0].replace(/,/g, "");
+  const finalNum = parseFloat(numStr);
+  if (isNaN(finalNum)) { el.textContent = finalText; return; }
+  const prefix = finalText.slice(0, match.index);
+  const suffix = finalText.slice(match.index + match[0].length);
+  const decimals = (numStr.split(".")[1] || "").length;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - start) / durationMs);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const cur = finalNum * eased;
+    el.textContent = prefix + cur.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(step);
+    else el.textContent = finalText;
+  }
+  requestAnimationFrame(step);
+}
+
+/* ============================================================
+   OVERVIEW: strip pasar cepat, event minggu ini, berita, ringkasan bot
+   ============================================================ */
+async function loadOverviewStrip() {
+  const row = document.getElementById("stripRow");
+  if (!row) return;
+  try {
+    const tickers = await getBybitTickers();
+    const btc = tickers["BTCUSDT"];
+    const items = [
+      { lbl: "BTC", val: btc ? "$" + fmtCompact(parseFloat(btc.lastPrice)) : "-", chg: btc ? parseFloat(btc.price24hPcnt) * 100 : null },
+    ];
+    row.innerHTML = items.map(i => `
+      <div class="strip-item">
+        <div class="sv ${i.chg >= 0 ? "win" : "loss"}">${i.val}</div>
+        <div class="sl">${i.lbl} ${i.chg !== null ? (i.chg >= 0 ? "+" : "") + i.chg.toFixed(2) + "%" : ""}</div>
+      </div>`).join("") + `
+      <div class="strip-item"><div class="sv" style="color:var(--text-dim);font-size:11px;">Lihat live di tab<br>Forex & Commodities</div><div class="sl">DXY · XAUUSD · S&P 500</div></div>`;
+    setUpdated("stripUpdated", Date.now());
+  } catch (e) {
+    row.innerHTML = `<div class="strip-item"><div class="sv" style="color:var(--text-dim);">tidak tersedia</div></div>`;
+  }
+}
+
+// NFP = Jumat pertama tiap bulan (aturan resmi, selalu benar secara definisi)
+function getFirstFridayOfMonth(year, month) {
+  const d = new Date(Date.UTC(year, month, 1));
+  const day = d.getUTCDay();
+  const offset = (5 - day + 7) % 7;
+  d.setUTCDate(1 + offset);
+  return d;
+}
+function buildKnownEvents() {
+  const now = new Date();
+  const events = [];
+  for (let m = 0; m < 3; m++) {
+    const y = now.getUTCFullYear();
+    const mo = now.getUTCMonth() + m;
+    const nfp = getFirstFridayOfMonth(y, mo);
+    events.push({ date: nfp, name: "Non-Farm Payroll (NFP) AS", note: "Selalu Jumat pertama tiap bulan — historically bikin USD & Gold bergerak besar." });
+  }
+  events.push({ date: null, name: "FOMC Rate Decision", note: "Jadwal FOMC diumumkan resmi jauh hari oleh The Fed — cek tanggal PASTI di tab Calendar, biasanya ~8x/tahun.", approx: true });
+  events.push({ date: null, name: "CPI AS (Inflasi)", note: "Biasanya dirilis sekitar minggu ke-2 tiap bulan — cek tanggal PASTI di tab Calendar.", approx: true });
+  return events.filter(e => e.date === null || e.date >= new Date(now.getTime() - 86400000)).sort((a, b) => (a.date || new Date(2099, 0)) - (b.date || new Date(2099, 0)));
+}
+function loadWeekAhead() {
+  const el = document.getElementById("weekAheadList");
+  if (!el) return;
+  const events = buildKnownEvents().slice(0, 5);
+  el.innerHTML = events.map(e => {
+    const dateStr = e.date ? e.date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }) : "Tanggal bervariasi";
+    return `<div class="mini-row"><span><b>${dateStr}</b> — ${e.name}${e.approx ? " *" : ""}</span></div>
+      <div style="font-size:11.5px;color:var(--text-dim);padding-bottom:8px;">${e.note}</div>`;
+  }).join("");
+}
+async function loadOverviewEventsPreview() {
+  const el = document.getElementById("ov_events");
+  if (!el) return;
+  const events = buildKnownEvents().slice(0, 3);
+  el.innerHTML = events.map(e => {
+    const dateStr = e.date ? e.date.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" }) : "~bulan ini";
+    return `<div class="mini-row"><span>${e.name}</span><span style="color:var(--text-dim);">${dateStr}</span></div>`;
+  }).join("");
+}
+
+async function loadOverviewNewsPreview() {
+  const el = document.getElementById("ov_news");
+  if (!el) return;
+  try {
+    const feed = "https://cointelegraph.com/rss";
+    const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed));
+    const items = (data.items || []).slice(0, 3);
+    if (items.length === 0) throw new Error("empty");
+    el.innerHTML = items.map(n => `<div class="mini-row"><span>${n.title}</span></div>`).join("");
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Berita tidak tersedia saat ini.</span></div>`;
+  }
+}
+
+async function loadOverviewBotSummary() {
+  const el = document.getElementById("ov_bot_summary");
+  if (!el) return;
+  try {
+    const sig = await fetchJson("./signals.json?_=" + Date.now());
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = (sig.recent || []).filter(r => (r.entry_time || "").slice(0, 10) === today).length;
+    el.innerHTML = `
+      <div class="mini-row"><span>Sinyal hari ini</span><span class="rv">${todayCount}</span></div>
+      <div class="mini-row"><span>Win Rate keseluruhan</span><span class="rv">${sig.win_rate != null ? sig.win_rate + "%" : "-"}</span></div>
+      <div class="mini-row"><span>Profit Factor</span><span class="rv">${sig.profit_factor ?? "-"}</span></div>
+      <div class="mini-row"><span>Trade sedang open</span><span class="rv">${sig.open ?? 0}</span></div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Data bot tidak tersedia.</span></div>`;
+  }
+}
+
+/* ============================================================
+   NEWS: RSS multi-sumber via rss2json (keyless, free tier)
+   ============================================================ */
+const RSS_SOURCES = {
+  rss_coindesk: "https://www.coindesk.com/arc/outboundfeeds/rss/",
+  rss_cointelegraph: "https://cointelegraph.com/rss",
+  rss_forexlive: "https://www.forexlive.com/feed/news",
+  rss_marketwatch: "https://www.marketwatch.com/rss/topstories",
+  rss_cnbc: "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+};
+async function loadRssFeeds() {
+  for (const [elId, feedUrl] of Object.entries(RSS_SOURCES)) {
+    const el = document.getElementById(elId);
+    if (!el || el.dataset.loaded) continue;
+    try {
+      const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl));
+      const items = (data.items || []).slice(0, 6);
+      if (items.length === 0) throw new Error("empty");
+      el.innerHTML = items.map(n => `<div class="mini-row"><a href="${n.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">${n.title}</a></div>`).join("");
+      el.dataset.loaded = "1";
+    } catch (e) {
+      el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Sumber ini tidak tersedia saat ini.</span></div>`;
+    }
+  }
+}
+
+/* ============================================================
+   CALENDAR: tabel referensi dampak historis (statis)
+   ============================================================ */
+const HISTORICAL_IMPACT = [
+  ["Non-Farm Payroll (NFP)", "Jauh di atas ekspektasi → USD cenderung menguat tajam, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["CPI / Inflasi", "Di atas ekspektasi → DXY naik, Gold & crypto cenderung tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["FOMC / Interest Rate Decision", "Nada hawkish/naik bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya. Kejutan vs ekspektasi pasar yang paling menggerakkan harga."],
+  ["GDP", "Di atas ekspektasi → mata uang terkait cenderung menguat jangka pendek."],
+  ["PMI (Manufacturing/Services)", "Di atas 50 & naik dari sebelumnya → sentimen risk-on, mendukung mata uang & saham terkait."],
+  ["Unemployment Rate", "Naik dari ekspektasi → mata uang terkait melemah."],
+  ["Retail Sales", "Di atas ekspektasi → mata uang menguat, sinyal konsumsi kuat."],
+];
+function renderHistoricalImpact() {
+  const el = document.getElementById("historicalImpactBody");
+  if (!el || el.dataset.loaded) return;
+  el.innerHTML = HISTORICAL_IMPACT.map(([name, note]) => `<tr><td style="white-space:normal;font-weight:600;">${name}</td><td style="white-space:normal;color:var(--text-dim);">${note}</td></tr>`).join("");
+  el.dataset.loaded = "1";
+}
+
+/* ============================================================
+   TRENDING COINS (CoinGecko /search/trending)
+   ============================================================ */
+async function loadTrendingCoins() {
+  const tbody = document.getElementById("trendingTableBody");
+  if (!tbody) return;
+  try {
+    const data = await fetchJson(`${CG_BASE}/search/trending`);
+    const coins = (data.coins || []).slice(0, 10).map(c => c.item);
+    tbody.innerHTML = coins.map(c => `
+      <tr>
+        <td>${c.symbol.toUpperCase()}</td>
+        <td>${c.data && c.data.price ? "$" + fmtNum(c.data.price, c.data.price < 1 ? 6 : 2) : "-"}</td>
+        <td class="${c.data && c.data.price_change_percentage_24h && c.data.price_change_percentage_24h.usd >= 0 ? "win" : "loss"}">
+          ${c.data && c.data.price_change_percentage_24h ? fmtNum(c.data.price_change_percentage_24h.usd, 2) + "%" : "-"}
+        </td>
+        <td>${c.data && c.data.total_volume ? c.data.total_volume : "-"}</td>
+      </tr>`).join("");
+    setUpdated("trendingUpdated", Date.now());
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--red);text-align:center;">Gagal memuat trending coins.</td></tr>`;
+  }
+}
+
+/* ============================================================
+   KALKULATOR RISIKO
+   ============================================================ */
+let rcDir = 1;
+function setRcDir(dir) {
+  rcDir = dir;
+  document.getElementById("rc_dir_long").className = dir === 1 ? "sel-buy" : "";
+  document.getElementById("rc_dir_short").className = dir === -1 ? "sel-sell" : "";
+  calcRisk();
+}
+function calcRisk() {
+  const balance = parseFloat(document.getElementById("rc_balance").value) || 0;
+  const riskPct = parseFloat(document.getElementById("rc_risk").value) || 0;
+  const entry = parseFloat(document.getElementById("rc_entry").value) || 0;
+  const sl = parseFloat(document.getElementById("rc_sl").value) || 0;
+  const leverage = parseFloat(document.getElementById("rc_leverage").value) || 1;
+
+  if (!entry || !sl || entry === sl) {
+    ["rc_out_risk", "rc_out_sldist", "rc_out_possize", "rc_out_margin", "rc_out_liq", "rc_out_safety"].forEach(id => document.getElementById(id).textContent = "-");
+    return;
+  }
+  const riskRp = balance * (riskPct / 100);
+  const slDistPct = Math.abs(entry - sl) / entry * 100;
+  const posSize = riskRp / (slDistPct / 100);
+  const margin = posSize / leverage;
+  const MMR = 0.005;
+  let liq;
+  if (rcDir === 1) liq = entry * (1 - 1 / leverage + MMR);
+  else liq = entry * (1 + 1 / leverage - MMR);
+
+  const slBeforeLiq = rcDir === 1 ? sl > liq : sl < liq;
+
+  document.getElementById("rc_out_risk").textContent = "Rp" + riskRp.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+  document.getElementById("rc_out_sldist").textContent = slDistPct.toFixed(3) + "%";
+  document.getElementById("rc_out_possize").textContent = "Rp" + posSize.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+  document.getElementById("rc_out_margin").textContent = "Rp" + margin.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+  document.getElementById("rc_out_liq").textContent = liq.toFixed(entry < 1 ? 6 : 2);
+  const safetyEl = document.getElementById("rc_out_safety");
+  if (slBeforeLiq) {
+    safetyEl.textContent = "AMAN — SL kena duluan sebelum liquidation";
+    safetyEl.style.color = "var(--green)";
+  } else {
+    safetyEl.textContent = "BAHAYA — Liquidation bisa kena SEBELUM SL! Turunkan leverage.";
+    safetyEl.style.color = "var(--red)";
+  }
+}
+["rc_balance", "rc_risk", "rc_entry", "rc_sl", "rc_leverage"].forEach(id => {
+  document.addEventListener("DOMContentLoaded", () => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", calcRisk);
+  });
+});
+
+/* ============================================================
+   JURNAL TRADING (localStorage, tanpa backend)
+   ============================================================ */
+let jrDir = 1;
+function setJrDir(dir) {
+  jrDir = dir;
+  document.getElementById("jr_dir_buy").className = dir === 1 ? "sel-buy" : "";
+  document.getElementById("jr_dir_sell").className = dir === -1 ? "sel-sell" : "";
+}
+function loadJournalData() {
+  try { return JSON.parse(localStorage.getItem("trading_journal") || "[]"); } catch (e) { return []; }
+}
+function saveJournalEntry() {
+  const entry = {
+    date: document.getElementById("jr_date").value || new Date().toISOString().slice(0, 10),
+    coin: document.getElementById("jr_coin").value || "-",
+    dir: jrDir,
+    hasil: document.getElementById("jr_hasil").value,
+    entryBot: parseFloat(document.getElementById("jr_entry_bot").value) || null,
+    entryActual: parseFloat(document.getElementById("jr_entry_actual").value) || null,
+    slBot: parseFloat(document.getElementById("jr_sl_bot").value) || null,
+    exitActual: parseFloat(document.getElementById("jr_exit_actual").value) || null,
+    alasan: document.getElementById("jr_alasan").value || "",
+  };
+  const data = loadJournalData();
+  data.unshift(entry);
+  localStorage.setItem("trading_journal", JSON.stringify(data));
+  ["jr_coin", "jr_entry_bot", "jr_entry_actual", "jr_sl_bot", "jr_exit_actual", "jr_alasan"].forEach(id => document.getElementById(id).value = "");
+  renderJournal();
+}
+function deleteJournalEntry(idx) {
+  const data = loadJournalData();
+  data.splice(idx, 1);
+  localStorage.setItem("trading_journal", JSON.stringify(data));
+  renderJournal();
+}
+function renderJournal() {
+  const tbody = document.getElementById("jr_table_body");
+  const statsEl = document.getElementById("jr_stats");
+  if (!tbody) return;
+  const data = loadJournalData();
+  const wins = data.filter(d => d.hasil === "WIN").length;
+  const total = data.length;
+  statsEl.innerHTML = `
+    <div class="stat-box"><div class="val">${total}</div><div class="lbl">Total Trade Manual</div></div>
+    <div class="stat-box"><div class="val">${total > 0 ? (wins / total * 100).toFixed(1) + "%" : "-"}</div><div class="lbl">Win Rate Aktual</div></div>`;
+  tbody.innerHTML = data.map((d, i) => {
+    const gap = (d.entryBot && d.entryActual) ? ((d.entryActual - d.entryBot) / d.entryBot * 100).toFixed(3) + "%" : "-";
+    const hasilClass = d.hasil === "WIN" ? "win" : d.hasil === "LOSS" ? "loss" : "open";
+    return `<tr>
+      <td>${d.date}</td><td>${d.coin}</td><td>${d.dir === 1 ? "BUY" : "SELL"}</td>
+      <td>${d.entryBot ?? "-"}</td><td>${d.entryActual ?? "-"}</td><td>${gap}</td>
+      <td class="${hasilClass}">${d.hasil}</td>
+      <td><button class="link-btn" onclick="deleteJournalEntry(${i})">Hapus</button></td>
+    </tr>`;
+  }).join("");
+}
+
+/* ============================================================
+   LIGHTWEIGHT CHARTS: candlestick + overlay sinyal (Entry/SL/TP)
+   ============================================================ */
+let lwChart = null, lwSeries = null, lwCurrentSymbol = "BYBIT:1000PEPEUSDT.P", lwCurrentInterval = "1";
+async function lwFetchKlines(symbolBybit, interval) {
+  const limit = 300;
+  const data = await fetchJson(`${BYBIT_BASE}/v5/market/kline?category=linear&symbol=${symbolBybit}&interval=${interval}&limit=${limit}`);
+  const list = (data.result && data.result.list) || [];
+  return list.map(r => ({
+    time: Math.floor(parseInt(r[0]) / 1000),
+    open: parseFloat(r[1]), high: parseFloat(r[2]), low: parseFloat(r[3]), close: parseFloat(r[4]),
+  })).reverse();
+}
+async function lwOverlaySignals(symbolBybit) {
+  if (!lwChart) return;
+  try {
+    const sig = await fetchJson("./signals.json?_=" + Date.now());
+    const trades = (sig.recent || []).filter(r => r.symbol === symbolBybit);
+    trades.forEach(tr => {
+      const entryTime = Math.floor(new Date(tr.entry_time.replace(" ", "T") + "Z").getTime() / 1000);
+      const color = tr.dir == 1 ? "#f0b429" : "#f0b429";
+      const priceLines = [
+        { price: parseFloat(tr.entry), color: "#f0b429", title: "Entry" },
+      ];
+      if (tr.sl) priceLines.push({ price: parseFloat(tr.sl), color: "#f0526b", title: "SL" });
+      if (tr.tp) priceLines.push({ price: parseFloat(tr.tp), color: "#26c281", title: "TP" });
+      priceLines.forEach(pl => {
+        lwSeries.createPriceLine({ price: pl.price, color: pl.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: pl.title });
+      });
+    });
+    const markers = trades.map(tr => ({
+      time: Math.floor(new Date(tr.entry_time.replace(" ", "T") + "Z").getTime() / 1000),
+      position: tr.dir == 1 ? "belowBar" : "aboveBar",
+      color: tr.dir == 1 ? "#26c281" : "#f0526b",
+      shape: tr.dir == 1 ? "arrowUp" : "arrowDown",
+      text: tr.dir == 1 ? "BUY" : "SELL",
+    }));
+    if (markers.length) lwSeries.setMarkers(markers);
+  } catch (e) { /* diamkan, chart tetap tampil tanpa overlay */ }
+}
+async function lwLoadSymbol(tvSymbol) {
+  lwCurrentSymbol = tvSymbol;
+  const bybitSym = tvSymbol.replace("BYBIT:", "").replace(".P", "");
+  if (!lwSeries) return;
+  try {
+    const klines = await lwFetchKlines(bybitSym, lwCurrentInterval);
+    lwSeries.setData(klines);
+    await lwOverlaySignals(bybitSym);
+    lwChart.timeScale().fitContent();
+  } catch (e) {
+    console.error("gagal load chart", e);
+  }
+}
+function lwLoadInterval(tf) {
+  lwCurrentInterval = tf;
+  lwLoadSymbol(lwCurrentSymbol);
+}
+function lwResize() {
+  if (!lwChart) return;
+  const container = document.getElementById("lwChartContainer");
+  const isFull = container.classList.contains("fullscreen-chart");
+  const h = isFull ? window.innerHeight - 130 : 480;
+  document.getElementById("lwChart").style.height = h + "px";
+  lwChart.resize(container.clientWidth - (isFull ? 20 : 0), h);
+}
+window.lwLoadSymbol = lwLoadSymbol;
+window.lwLoadInterval = lwLoadInterval;
+window.lwResize = lwResize;
+window.initLwChart = function () {
+  if (lwChart) { lwResize(); return; }
+  if (!window.LightweightCharts) { setTimeout(window.initLwChart, 200); return; }
+  const el = document.getElementById("lwChart");
+  lwChart = LightweightCharts.createChart(el, {
+    layout: { background: { color: "transparent" }, textColor: "#8b93a7" },
+    grid: { vertLines: { color: "#1a1f2b" }, horzLines: { color: "#1a1f2b" } },
+    width: el.clientWidth, height: 480,
+    timeScale: { timeVisible: true, secondsVisible: false },
+  });
+  lwSeries = lwChart.addCandlestickSeries({
+    upColor: "#26c281", downColor: "#f0526b", borderVisible: false,
+    wickUpColor: "#26c281", wickDownColor: "#f0526b",
+  });
+  const picker = document.getElementById("symbolPicker");
+  lwLoadSymbol(picker.value);
+  window.addEventListener("resize", lwResize);
+};
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   loadBreakingTicker();
   loadSignalsTab();
   loadOverviewTab();
+  loadOverviewStrip();
+  loadOverviewEventsPreview();
+  loadOverviewNewsPreview();
+  loadOverviewBotSummary();
+  setJrDir(1);
+  renderJournal();
+  calcRisk();
 });
