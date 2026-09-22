@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ICT Sweep + CISD — Crypto Futures Dashboard</title>
+<title>RS Market Terminal</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
@@ -133,6 +133,16 @@
   .gauge-wrap { position: relative; height: 14px; background: linear-gradient(90deg,#f0526b,#f0b429,#26c281); border-radius: 8px; margin: 20px 0; }
   .gauge-needle { position: absolute; top: -8px; width: 3px; height: 30px; background: white; border-radius: 2px; transform: translateX(-50%); }
   footer { padding: 20px 18px; text-align: center; color: var(--text-dim); font-size: 11px; line-height: 1.8; border-top: 1px solid var(--border); }
+  .coin-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .coin-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .coin-card-name { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .coin-card-name img { width: 20px; height: 20px; border-radius: 50%; }
+  .coin-card-tags { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .coin-tag { background: var(--accent-dim); color: #cddcff; font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+  .coin-card-desc { font-size: 11.5px; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
+  .coin-card-links { margin-top: 8px; display: flex; gap: 10px; }
+  .coin-card-links a { font-size: 11px; color: #a7b3ff; text-decoration: none; }
+  .coin-card-links a:hover { text-decoration: underline; }
   .link-btn {
     background: transparent; border: 1px solid var(--grad1); color: #a7b3ff; font-size: 11.5px;
     padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all .15s;
@@ -165,10 +175,44 @@
   #chartToolbar button.active { background: linear-gradient(135deg, var(--grad1), var(--grad2)); color: white; border-color: transparent; }
   #lwChartContainer { position: relative; }
   #lwChartContainer.fullscreen-chart { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(--bg); padding: 10px; }
-  body.chart-fullscreen-active > *:not(.panel) { display: none !important; }
-  body.chart-fullscreen-active .panel:not(.active) { display: none !important; }
-  body.chart-fullscreen-active .panel.active { padding: 0; max-width: none; }
-  body.chart-fullscreen-active .panel.active > .card:not(:has(#lwChartContainer)) { display: none !important; }
+  body.chart-fullscreen-active #tv_ticker_tape,
+  body.chart-fullscreen-active .sidebar,
+  body.chart-fullscreen-active .breaking-bar,
+  body.chart-fullscreen-active header,
+  body.chart-fullscreen-active footer { display: none !important; }
+  body.chart-fullscreen-active .main-wrap > .panel:not(.active) { display: none !important; }
+  body.chart-fullscreen-active .main-wrap > .panel.active { padding: 0; max-width: none; }
+  body.chart-fullscreen-active .main-wrap > .panel.active > .card:not(:has(#lwChartContainer)) { display: none !important; }
+
+  /* ===== SIDEBAR LAYOUT ===== */
+  .app-shell { display: flex; align-items: flex-start; }
+  .sidebar {
+    width: 230px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    min-height: 100vh; position: sticky; top: 0; transition: width .2s ease; overflow-x: hidden; overflow-y: auto; z-index: 30;
+  }
+  .sidebar.collapsed { width: 60px; }
+  .sidebar-top { display: flex; align-items: center; gap: 10px; padding: 14px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2; }
+  .sidebar-toggle { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 7px 10px; cursor: pointer; flex-shrink: 0; font-size: 14px; }
+  .sidebar-toggle:hover { border-color: var(--grad1); }
+  .sidebar-brand { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; background: linear-gradient(90deg, var(--grad1), var(--grad2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sidebar.collapsed .sidebar-brand { display: none; }
+  .sidebar-nav { display: flex; flex-direction: column; padding: 8px; gap: 2px; }
+  .sidebar-nav .tab {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 12px;
+    border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--text-dim);
+    font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; transition: all .15s;
+  }
+  .sidebar-nav .tab:hover { background: var(--surface2); color: var(--text); transform: none; }
+  .sidebar-nav .tab.active { background: linear-gradient(135deg, var(--grad1), var(--grad2)); color: white; box-shadow: 0 2px 10px rgba(91,107,255,.35); }
+  .sidebar.collapsed .sidebar-nav .tab { justify-content: center; padding: 10px; }
+  .sidebar.collapsed .sidebar-nav .tab .tab-label { display: none; }
+  .tab-icon { flex-shrink: 0; }
+  .main-wrap { flex: 1; min-width: 0; }
+  @media (max-width: 768px) {
+    .sidebar-top .sidebar-brand { display: none; }
+    .sidebar:not(.collapsed) { position: fixed; top: 0; left: 0; height: 100vh; width: 220px; box-shadow: 4px 0 24px rgba(0,0,0,.5); }
+    .sidebar:not(.collapsed) .sidebar-top .sidebar-brand { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -183,13 +227,45 @@
         {"proName":"FX:EURUSD","title":"EUR/USD"},{"proName":"FX:GBPUSD","title":"GBP/USD"},
         {"proName":"FX:USDJPY","title":"USD/JPY"},{"proName":"TVC:GOLD","title":"Gold"},
         {"proName":"TVC:USOIL","title":"WTI"},{"proName":"TVC:DXY","title":"DXY"},
-        {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"NASDAQ:NDX","title":"Nasdaq"}
+        {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"NASDAQ:NDX","title":"Nasdaq"},
+        {"proName":"IDX:BBCA","title":"BBCA"},{"proName":"IDX:BBRI","title":"BBRI"},
+        {"proName":"IDX:TLKM","title":"TLKM"},{"proName":"IDX:ASII","title":"ASII"},{"proName":"IDX:BMRI","title":"BMRI"},
+        {"proName":"NASDAQ:AAPL","title":"AAPL"},{"proName":"NASDAQ:NVDA","title":"NVDA"},
+        {"proName":"NASDAQ:MSFT","title":"MSFT"},{"proName":"NASDAQ:TSLA","title":"TSLA"},
+        {"proName":"NYSE:BABA","title":"BABA"},{"proName":"AMEX:FXI","title":"FXI"},{"proName":"NYSE:KWEB","title":"KWEB"},
+        {"proName":"AMEX:SPY","title":"SPY"},{"proName":"NASDAQ:QQQ","title":"QQQ"},{"proName":"AMEX:VOO","title":"VOO"},{"proName":"AMEX:GLD","title":"GLD"}
       ],
       "colorTheme": "dark", "isTransparent": true, "displayMode": "adaptive", "locale": "id"
     }
     </script>
   </div>
 </div>
+
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+    <div class="sidebar-brand">RS Market Terminal</div>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="tab active" data-tab="overview"><span class="tab-icon">🏠</span><span class="tab-label">Overview</span></button>
+    <button class="tab" data-tab="chart"><span class="tab-icon">📈</span><span class="tab-label">Chart</span></button>
+    <button class="tab" data-tab="crypto"><span class="tab-icon">🪙</span><span class="tab-label">Crypto</span></button>
+    <button class="tab" data-tab="futures"><span class="tab-icon">📊</span><span class="tab-label">Futures Data</span></button>
+    <button class="tab" data-tab="forex"><span class="tab-icon">💱</span><span class="tab-label">Forex & Commodities</span></button>
+    <button class="tab" data-tab="bubbles"><span class="tab-icon">🫧</span><span class="tab-label">Bubbles</span></button>
+    <button class="tab" data-tab="news"><span class="tab-icon">📰</span><span class="tab-label">News</span></button>
+    <button class="tab" data-tab="calendar"><span class="tab-icon">📅</span><span class="tab-label">Calendar</span></button>
+    <button class="tab" data-tab="sentiment"><span class="tab-icon">🎭</span><span class="tab-label">Sentiment</span></button>
+    <button class="tab" data-tab="insight"><span class="tab-icon">💡</span><span class="tab-label">Insight</span></button>
+    <button class="tab" data-tab="kalkulator"><span class="tab-icon">🧮</span><span class="tab-label">Kalkulator</span></button>
+    <button class="tab" data-tab="jurnal"><span class="tab-icon">📓</span><span class="tab-label">Jurnal</span></button>
+    <button class="tab" data-tab="signals"><span class="tab-icon">🔔</span><span class="tab-label">Signals</span></button>
+    <button class="tab" data-tab="performance"><span class="tab-icon">📈</span><span class="tab-label">Performance</span></button>
+    <button class="tab" data-tab="guide"><span class="tab-icon">🎓</span><span class="tab-label">Guide</span></button>
+  </nav>
+</aside>
+<div class="main-wrap">
 
 <div class="breaking-bar">
   <div class="breaking-label">BREAKING</div>
@@ -198,29 +274,11 @@
 
 <header>
   <div class="title-block">
-    <h1>ICT Sweep + CISD — Crypto Futures</h1>
-    <div class="sub">28 coin final · Bybit · risiko 1%</div>
+    <h1>RS Market Terminal</h1>
+    <div class="sub">ICT Sweep+CISD · 28 coin final · Bybit · risiko 1%</div>
   </div>
   <a class="tg-btn" href="https://t.me/crypto_ict_signal_bot" target="_blank" rel="noopener">✈ Buka Telegram</a>
 </header>
-
-<nav class="tabs">
-  <button class="tab active" data-tab="overview">🏠 Overview</button>
-  <button class="tab" data-tab="chart">📈 Chart</button>
-  <button class="tab" data-tab="crypto">🪙 Crypto</button>
-  <button class="tab" data-tab="futures">📊 Futures Data</button>
-  <button class="tab" data-tab="forex">💱 Forex & Commodities</button>
-  <button class="tab" data-tab="bubbles">🫧 Bubbles</button>
-  <button class="tab" data-tab="news">📰 News</button>
-  <button class="tab" data-tab="calendar">📅 Calendar</button>
-  <button class="tab" data-tab="sentiment">🎭 Sentiment</button>
-  <button class="tab" data-tab="insight">💡 Insight</button>
-  <button class="tab" data-tab="kalkulator">🧮 Kalkulator</button>
-  <button class="tab" data-tab="jurnal">📓 Jurnal</button>
-  <button class="tab" data-tab="signals">🔔 Signals</button>
-  <button class="tab" data-tab="performance">📈 Performance</button>
-  <button class="tab" data-tab="guide">🎓 Guide</button>
-</nav>
 
 <!-- OVERVIEW -->
 <div id="tab-overview" class="panel active">
@@ -317,12 +375,7 @@
     <h3>Trending Coins (24h)</h3>
     <div class="warn-box">Coin trending/gainer tinggi seringkali volatil ekstrem dan rawan pump-and-dump, terutama meme coin market cap kecil — riset mendalam sebelum entry, jangan FOMO.</div>
     <span class="updated-tag" id="trendingUpdated">terakhir update: -</span>
-    <div style="overflow-x:auto;">
-    <table>
-      <thead><tr><th>Coin</th><th>Harga</th><th>24h%</th><th>Volume 24h</th></tr></thead>
-      <tbody id="trendingTableBody"><tr><td colspan="4"><div class="skeleton skeleton-row"></div></td></tr></tbody>
-    </table>
-    </div>
+    <div id="trendingListBody"><div class="skeleton skeleton-row"></div></div>
   </div>
   <div class="card">
     <h3>28 Coin Watchlist</h3>
@@ -553,6 +606,17 @@
       </script>
     </div>
   </div>
+  <div class="card">
+    <h3>Opini & Analisis — Crypto (CoinDesk/CoinTelegraph Opinion)</h3>
+    <span class="updated-tag" id="insightCryptoUpdated">terakhir update: -</span>
+    <div id="insight_crypto_opinion"><div class="skeleton skeleton-row"></div></div>
+  </div>
+  <div class="card">
+    <h3>Opini & Analisis — Forex (ForexLive)</h3>
+    <span class="updated-tag" id="insightForexUpdated">terakhir update: -</span>
+    <div id="insight_forex_analysis"><div class="skeleton skeleton-row"></div></div>
+  </div>
+  <div class="note-box">Investing.com & Reuters TIDAK dimasukkan sebagai sumber di sini — kedua platform sudah tidak menyediakan RSS publik gratis yang bisa diakses otomatis (sudah dicek langsung, bukan diasumsikan). Bloomberg juga tidak dipakai karena tidak ada RSS resmi gratis untuk kontennya.</div>
 </div>
 
 <!-- KALKULATOR RISIKO -->
@@ -700,6 +764,9 @@
   Tidak ada jaminan profit dari sinyal atau data yang ditampilkan di halaman ini.
 </footer>
 
+</div><!-- /main-wrap -->
+</div><!-- /app-shell -->
+
 <script src="./app.js"></script>
 <script>
   /* COINS didefinisikan di app.js (dimuat sebelum blok ini) supaya tidak dobel deklarasi */
@@ -736,19 +803,27 @@
     news: () => { loadWeekAhead(); loadRssFeeds(); },
     calendar: () => renderHistoricalImpact(),
     jurnal: () => renderJournal(),
+    insight: () => loadInsightOpinionFeeds(),
   };
 
   function activateTab(tabName) {
-    document.querySelectorAll('nav.tabs > .tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('body > .panel').forEach(p => p.classList.remove('active'));
-    const btn = document.querySelector('nav.tabs > .tab[data-tab="' + tabName + '"]');
+    document.querySelectorAll('.sidebar-nav > .tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.main-wrap > .panel').forEach(p => p.classList.remove('active'));
+    const btn = document.querySelector('.sidebar-nav > .tab[data-tab="' + tabName + '"]');
     if (btn) btn.classList.add('active');
     document.getElementById('tab-' + tabName).classList.add('active');
     if (tabLoaders[tabName]) tabLoaders[tabName]();
+    if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('collapsed');
   }
   window.gotoTab = activateTab;
 
-  document.querySelectorAll('nav.tabs > .tab').forEach(btn => {
+  const sidebarEl = document.getElementById('sidebar');
+  if (window.innerWidth <= 768) sidebarEl.classList.add('collapsed');
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    sidebarEl.classList.toggle('collapsed');
+  });
+
+  document.querySelectorAll('.sidebar-nav > .tab').forEach(btn => {
     btn.addEventListener('click', () => activateTab(btn.dataset.tab));
   });
 

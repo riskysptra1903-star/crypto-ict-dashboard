@@ -639,13 +639,12 @@ const RSS_SOURCES = {
 async function loadRssFeeds() {
   for (const [elId, feedUrl] of Object.entries(RSS_SOURCES)) {
     const el = document.getElementById(elId);
-    if (!el || el.dataset.loaded) continue;
+    if (!el) continue;
     try {
       const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl));
       const items = (data.items || []).slice(0, 6);
       if (items.length === 0) throw new Error("empty");
       el.innerHTML = items.map(n => `<div class="mini-row"><a href="${n.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">${n.title}</a></div>`).join("");
-      el.dataset.loaded = "1";
     } catch (e) {
       el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Sumber ini tidak tersedia saat ini.</span></div>`;
     }
@@ -669,6 +668,47 @@ function renderHistoricalImpact() {
   if (!el || el.dataset.loaded) return;
   el.innerHTML = HISTORICAL_IMPACT.map(([name, note]) => `<tr><td style="white-space:normal;font-weight:600;">${name}</td><td style="white-space:normal;color:var(--text-dim);">${note}</td></tr>`).join("");
   el.dataset.loaded = "1";
+}
+
+/* ============================================================
+   INSIGHT TAB: opini/analisis pihak ketiga (RSS, bukan cuma TradingView)
+   Wajib tampilkan author asli + sumber + tanggal.
+   ============================================================ */
+function fmtRssDate(pubDate) {
+  try { return new Date(pubDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }); }
+  catch (e) { return pubDate || "-"; }
+}
+async function loadInsightOpinionFeeds() {
+  const targets = [
+    { el: "insight_crypto_opinion", updEl: "insightCryptoUpdated", sources: [
+      { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/?tag=opinion" },
+      { name: "CoinTelegraph", url: "https://cointelegraph.com/rss/tag/opinion" },
+    ] },
+    { el: "insight_forex_analysis", updEl: "insightForexUpdated", sources: [
+      { name: "ForexLive", url: "https://www.forexlive.com/feed/centralbank" },
+    ] },
+  ];
+  for (const target of targets) {
+    const el = document.getElementById(target.el);
+    if (!el) continue;
+    try {
+      const results = await Promise.all(target.sources.map(s =>
+        fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(s.url))
+          .then(data => (data.items || []).slice(0, 5).map(item => ({ ...item, sourceName: s.name })))
+          .catch(() => [])
+      ));
+      const items = results.flat();
+      if (items.length === 0) throw new Error("empty");
+      el.innerHTML = items.map(it => `
+        <div class="mini-row" style="display:block;">
+          <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;">${it.title}</a>
+          <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;">${it.author ? it.author + " · " : ""}${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
+        </div>`).join("");
+      setUpdated(target.updEl, Date.now());
+    } catch (e) {
+      el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Sumber ini tidak tersedia saat ini.</span></div>`;
+    }
+  }
 }
 
 /* ============================================================
@@ -713,24 +753,61 @@ async function loadFundamentalNews() {
 /* ============================================================
    TRENDING COINS (CoinGecko /search/trending)
    ============================================================ */
+function stripHtml(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html || "";
+  return (tmp.textContent || tmp.innerText || "").trim();
+}
 async function loadTrendingCoins() {
-  const tbody = document.getElementById("trendingTableBody");
-  if (!tbody) return;
+  const el = document.getElementById("trendingListBody");
+  if (!el) return;
+  el.innerHTML = `<div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;
   try {
     const data = await fetchJson(`${CG_BASE}/search/trending`);
-    const coins = (data.coins || []).slice(0, 10).map(c => c.item);
-    tbody.innerHTML = coins.map(c => `
-      <tr>
-        <td>${c.symbol.toUpperCase()}</td>
-        <td>${c.data && c.data.price ? "$" + fmtNum(c.data.price, c.data.price < 1 ? 6 : 2) : "-"}</td>
-        <td class="${c.data && c.data.price_change_percentage_24h && c.data.price_change_percentage_24h.usd >= 0 ? "win" : "loss"}">
-          ${c.data && c.data.price_change_percentage_24h ? fmtNum(c.data.price_change_percentage_24h.usd, 2) + "%" : "-"}
-        </td>
-        <td>${c.data && c.data.total_volume ? c.data.total_volume : "-"}</td>
-      </tr>`).join("");
+    const coins = (data.coins || []).slice(0, 8).map(c => c.item);
+
+    // render dulu data teknikal (cepat), fundamental menyusul per-coin (agar tidak nunggu lama / kena rate limit CoinGecko)
+    el.innerHTML = coins.map(c => {
+      const chg = c.data && c.data.price_change_percentage_24h ? c.data.price_change_percentage_24h.usd : null;
+      return `
+      <div class="coin-card" id="trend_${c.id}">
+        <div class="coin-card-top">
+          <div class="coin-card-name"><img src="${c.thumb}" onerror="this.style.display='none'"> ${c.name} (${c.symbol.toUpperCase()})</div>
+          <div style="text-align:right;">
+            <div>${c.data && c.data.price ? "$" + fmtNum(c.data.price, c.data.price < 1 ? 6 : 2) : "-"}</div>
+            <div class="${chg >= 0 ? "win" : "loss"}">${chg !== null ? (chg >= 0 ? "+" : "") + fmtNum(chg, 2) + "%" : "-"}</div>
+          </div>
+        </div>
+        <div class="coin-card-desc" id="trend_desc_${c.id}"><span class="skeleton skeleton-row" style="width:80%;"></span></div>
+      </div>`;
+    }).join("");
     setUpdated("trendingUpdated", Date.now());
+
+    // fundamental: fetch berurutan dengan jeda kecil biar tidak kena rate limit CoinGecko keyless (~10-30 req/menit)
+    for (const c of coins) {
+      try {
+        const detail = await fetchJson(`${CG_BASE}/coins/${c.id}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false`);
+        const descEl = document.getElementById(`trend_desc_${c.id}`);
+        if (!descEl) continue;
+        const desc = stripHtml(detail.description && detail.description.en).slice(0, 220);
+        const categories = (detail.categories || []).filter(Boolean).slice(0, 3);
+        const homepage = detail.links && detail.links.homepage && detail.links.homepage[0];
+        const twitter = detail.links && detail.links.twitter_screen_name;
+        descEl.innerHTML = `
+          ${desc ? desc + (desc.length >= 220 ? "..." : "") : "Belum ada deskripsi proyek dari CoinGecko."}
+          <div class="coin-card-tags">${categories.map(cat => `<span class="coin-tag">${cat}</span>`).join("")}</div>
+          <div class="coin-card-links">
+            ${homepage ? `<a href="${homepage}" target="_blank" rel="noopener">🔗 Website resmi</a>` : ""}
+            ${twitter ? `<a href="https://twitter.com/${twitter}" target="_blank" rel="noopener">🐦 Twitter</a>` : ""}
+          </div>`;
+      } catch (e) {
+        const descEl = document.getElementById(`trend_desc_${c.id}`);
+        if (descEl) descEl.textContent = "Info fundamental tidak tersedia (rate limit CoinGecko atau coin belum terdaftar lengkap).";
+      }
+      await new Promise(r => setTimeout(r, 1200));
+    }
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--red);text-align:center;">Gagal memuat trending coins.</td></tr>`;
+    el.innerHTML = `<div style="color:var(--red);text-align:center;padding:14px;">Gagal memuat trending coins.</div>`;
   }
 }
 
@@ -1019,4 +1096,16 @@ document.addEventListener("DOMContentLoaded", () => {
   setJrDir(1);
   renderJournal();
   calcRisk();
+
+  // Auto-refresh RSS/berita tiap 7 menit selama halaman dibuka (item 17: "tidak perlu tarik manual")
+  setInterval(() => {
+    loadBreakingTicker();
+    loadOverviewNewsPreview();
+    const newsTab = document.getElementById("tab-news");
+    if (newsTab && newsTab.classList.contains("active")) loadRssFeeds();
+    const insightTab = document.getElementById("tab-insight");
+    if (insightTab && insightTab.classList.contains("active")) loadInsightOpinionFeeds();
+    const cryptoTab = document.getElementById("tab-crypto");
+    if (cryptoTab && cryptoTab.classList.contains("active")) loadFundamentalNews();
+  }, 7 * 60 * 1000);
 });
