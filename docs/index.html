@@ -146,6 +146,7 @@
   .idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .idea-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
   .idea-card-img { width: 100%; height: 150px; object-fit: cover; background: var(--surface3, #1a1f2e); }
+  .idea-card-placeholder { display: flex; align-items: center; justify-content: center; font-size: 38px; font-weight: 700; color: rgba(255,255,255,0.25); }
   .idea-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
   .idea-card-title { color: var(--text); text-decoration: none; font-weight: 700; font-size: 13.5px; line-height: 1.4; }
   .idea-card-title:hover { text-decoration: underline; }
@@ -805,7 +806,7 @@
 </div><!-- /main-wrap -->
 </div><!-- /app-shell -->
 
-<script src="./app.js?v=20260923-2"></script>
+<script src="./app.js?v=20260923-3"></script>
 <script>
   /* COINS didefinisikan di app.js (dimuat sebelum blok ini) supaya tidak dobel deklarasi */
   const picker = document.getElementById('symbolPicker');

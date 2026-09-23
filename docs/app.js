@@ -733,6 +733,7 @@ const NEWS_SOURCE_SETS = {
   crypto: [
     { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/" },
     { name: "CoinTelegraph", url: "https://cointelegraph.com/rss" },
+    { name: "CoinTelegraph Analysis", url: "https://cointelegraph.com/rss/category/analysis" },
     { name: "Decrypt", url: "https://decrypt.co/feed" },
     { name: "The Block", url: "https://www.theblock.co/rss.xml" },
     { name: "CryptoSlate", url: "https://cryptoslate.com/feed/" },
@@ -775,7 +776,7 @@ function renderIdeaCards(items) {
     const snippet = stripHtml(it.description || "").slice(0, 110);
     return `
     <div class="idea-card">
-      ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
+      ${thumbOrPlaceholder(thumb, it.sourceName)}
       <div class="idea-card-body">
         <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
         ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
@@ -805,6 +806,21 @@ function extractThumb(item) {
   if (item.enclosure && item.enclosure.link && (item.enclosure.type || "").startsWith("image")) return item.enclosure.link;
   const m = (item.description || item.content || "").match(/<img[^>]+src="([^"]+)"/i);
   return m ? m[1] : null;
+}
+// Sebagian sumber (ForexLive, Google News, dll) memang tidak menyertakan gambar
+// sama sekali di RSS-nya (sudah dicek langsung) -- placeholder ini cuma dekorasi
+// visual (gradient + huruf awal sumber), BUKAN gambar asli artikel, biar kartu
+// tetap konsisten tanpa fabrikasi konten.
+function thumbOrPlaceholder(thumb, sourceName) {
+  if (thumb) return `<img src="${thumb}" onerror="this.outerHTML='${placeholderHtml(sourceName).replace(/'/g, "\\'")}'" class="idea-card-img">`;
+  return placeholderHtml(sourceName);
+}
+function placeholderHtml(sourceName) {
+  const label = (sourceName || "?").trim();
+  const initial = label.charAt(0).toUpperCase() || "?";
+  let hash = 0;
+  for (const ch of label) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+  return `<div class="idea-card-img idea-card-placeholder" style="background:linear-gradient(135deg, hsl(${hash},40%,22%), hsl(${(hash + 45) % 360},40%,14%));">${initial}</div>`;
 }
 /* ============================================================
    CALENDAR: tabel referensi dampak historis (statis)
@@ -878,7 +894,7 @@ function renderTvIdeas(category) {
     const snippet = stripHtml(it.description || "").slice(0, 120);
     return `
     <div class="idea-card">
-      ${parsed.chartImg ? `<img src="${parsed.chartImg}" onerror="this.remove()" class="idea-card-img">` : ""}
+      ${thumbOrPlaceholder(parsed.chartImg, source)}
       <div class="idea-card-body">
         ${parsed.symbol ? `<span class="idea-symbol-badge">${parsed.symbol}</span>` : ""}
         <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
@@ -924,25 +940,17 @@ async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    const [tvItems, ctAnalysisItems] = await Promise.all([
-      fetchFeedCached("https://www.tradingview.com/feed/"),
-      fetchFeedCached("https://cointelegraph.com/rss/category/analysis"),
-    ]);
+    // Khusus TradingView Ideas asli (chart + coretan dari trader komunitas) --
+    // JANGAN dicampur artikel/berita tertulis (CoinTelegraph dkk), itu tempatnya
+    // di tab News. Kalau kategori tertentu (mis. Crypto) kosong sesaat, itu memang
+    // keterbatasan feed sumbernya (lihat note-box), bukan diisi konten lain.
+    const tvItems = await fetchFeedCached("https://www.tradingview.com/feed/");
     const fresh = tvItems.slice(0, 20).map(it => {
       const parsed = parseTvIdea(it);
       return { it, parsed, category: classifyInstrument(parsed.symbol, it.title), source: "TradingView" };
     });
-    // Pelengkap kategori Crypto: analisis tertulis CoinTelegraph (bukan chart trader
-    // TradingView, tapi tetap analisis teknikal/pasar crypto asli dengan penulis &
-    // tanggal jelas) -- dipakai karena TradingView Ideas sering kosong utk crypto.
-    const ctFresh = ctAnalysisItems.slice(0, 10).map(it => ({
-      it,
-      parsed: { avatar: null, author: null, authorLink: null, symbol: "Analisis Crypto — CoinTelegraph", chartImg: extractThumb(it) },
-      category: "crypto",
-      source: "CoinTelegraph",
-    }));
     const seen = new Set();
-    const merged = [...fresh, ...ctFresh, ...loadTvIdeasPool()]
+    const merged = [...fresh, ...loadTvIdeasPool().filter(x => x.source !== "CoinTelegraph")]
       .filter(x => (seen.has(x.it.link) ? false : (seen.add(x.it.link), true)))
       .sort((a, b) => new Date(b.it.pubDate) - new Date(a.it.pubDate));
     if (merged.length === 0) throw new Error("empty");
@@ -980,7 +988,7 @@ async function loadInsightOpinionFeeds() {
         const snippet = stripHtml(it.description || "").slice(0, 110);
         return `
         <div class="idea-card">
-          ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
+          ${thumbOrPlaceholder(thumb, it.sourceName)}
           <div class="idea-card-body">
             <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
             ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
