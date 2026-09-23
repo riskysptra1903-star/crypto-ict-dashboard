@@ -150,7 +150,11 @@
   .idea-card-title { color: var(--text); text-decoration: none; font-weight: 700; font-size: 13.5px; line-height: 1.4; }
   .idea-card-title:hover { text-decoration: underline; }
   .idea-card-snippet { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; flex: 1; }
-  .idea-card-meta { font-size: 10.5px; color: #a7b3ff; margin-top: auto; padding-top: 4px; border-top: 1px solid var(--border); }
+  .idea-card-meta { font-size: 10.5px; color: #a7b3ff; margin-top: auto; padding-top: 4px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+  .idea-card-meta img { width: 18px; height: 18px; border-radius: 50%; }
+  .idea-card-meta a { color: #a7b3ff; text-decoration: none; }
+  .idea-card-meta a:hover { text-decoration: underline; }
+  .idea-symbol-badge { display: inline-block; background: var(--accent-dim); color: #cddcff; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-bottom: 4px; align-self: flex-start; }
   .link-btn {
     background: transparent; border: 1px solid var(--grad1); color: #a7b3ff; font-size: 11.5px;
     padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all .15s;
@@ -618,6 +622,12 @@
     <div class="warn-box"><b>Opini pihak ketiga, bukan rekomendasi dari dashboard ini.</b> Setiap kartu di bawah menampilkan nama penulis, platform asal, dan tanggal publikasi asli — kami tidak menulis ulang atau menilai kebenarannya.</div>
   </div>
   <div class="card">
+    <h3>TradingView Ideas — Analisis Teknikal Trader Komunitas</h3>
+    <div class="note-box">Chart, level (support/resistance/fibonacci), dan tulisan analisis di bawah ini dibuat oleh trader komunitas TradingView asli (bukan gambar/tulisan kami) — nama & link profil trader tertera di tiap kartu. Ini opini pribadi masing-masing trader, akurasinya tidak diverifikasi siapapun, BUKAN rekomendasi dari dashboard ini.</div>
+    <span class="updated-tag" id="tvIdeasUpdated">terakhir update: -</span>
+    <div id="tv_ideas_grid" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
+  </div>
+  <div class="card">
     <h3>Ide & Analisis — Crypto</h3>
     <span class="updated-tag" id="insightCryptoUpdated">terakhir update: -</span>
     <div id="insight_crypto_opinion" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
@@ -628,16 +638,6 @@
     <div id="insight_forex_analysis" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
   </div>
   <div class="note-box">Sumber: kolom opini/analisis asli dari CoinDesk, CoinTelegraph, ForexLive. Investing.com & Reuters TIDAK dimasukkan — sudah dicek langsung, kedua platform tidak lagi menyediakan RSS publik gratis. Bloomberg juga tidak dipakai karena tidak ada RSS resmi gratis untuk kontennya.</div>
-  <div class="card">
-    <h3>Feed Simbol dari TradingView (bukan community "Ideas")</h3>
-    <div class="note-box">Catatan jujur: TradingView tidak menyediakan widget embed gratis untuk feed komunitas "Ideas" seperti di id.tradingview.com/ideas (chart+coretan analisis dari trader lain) — yang tersedia gratis cuma widget berita/timeline seperti di bawah ini. Untuk lihat ide komunitas asli dengan chart, kunjungi langsung tradingview.com/ideas.</div>
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-      { "feedMode": "symbol", "symbol": "BINANCE:BTCUSDT", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "350", "colorTheme": "dark", "locale": "id" }
-      </script>
-    </div>
-  </div>
 </div>
 
 <!-- KALKULATOR RISIKO -->
@@ -824,7 +824,7 @@
     news: () => { loadWeekAhead(); loadRssFeeds(); loadCombinedNewsFeed(); },
     calendar: () => renderHistoricalImpact(),
     jurnal: () => renderJournal(),
-    insight: () => loadInsightOpinionFeeds(),
+    insight: () => { loadTvIdeas(); loadInsightOpinionFeeds(); },
   };
 
   function activateTab(tabName) {

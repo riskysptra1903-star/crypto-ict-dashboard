@@ -717,6 +717,59 @@ function fmtRssDate(pubDate) {
   try { return new Date(pubDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }); }
   catch (e) { return pubDate || "-"; }
 }
+/* ============================================================
+   TRADINGVIEW IDEAS: RSS resmi tradingview.com/feed/ (real chart +
+   analisis trader komunitas, bukan widget/scraping). Dicek langsung
+   dan feed ini memang tersedia publik, cuma tidak didaftarkan di
+   katalog widget resmi mereka.
+   ============================================================ */
+function parseTvIdea(item) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = item.content || "";
+  const avatarImg = tmp.querySelector(".avatar img");
+  const authorA = tmp.querySelector(".chart-author a");
+  const symbolA = tmp.querySelector(".chart-symbol a");
+  const imgs = tmp.querySelectorAll("img");
+  const chartImg = imgs.length > 1 ? imgs[1] : null;
+  return {
+    avatar: avatarImg ? avatarImg.getAttribute("src") : null,
+    author: authorA ? authorA.textContent.trim() : null,
+    authorLink: authorA ? authorA.getAttribute("href") : null,
+    symbol: symbolA ? symbolA.textContent.trim() : null,
+    chartImg: chartImg ? chartImg.getAttribute("src") : null,
+  };
+}
+async function loadTvIdeas() {
+  const el = document.getElementById("tv_ideas_grid");
+  if (!el) return;
+  try {
+    const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.tradingview.com/feed/"));
+    const items = (data.items || []).slice(0, 12);
+    if (items.length === 0) throw new Error("empty");
+    el.innerHTML = items.map(it => {
+      const parsed = parseTvIdea(it);
+      const snippet = stripHtml(it.description || "").slice(0, 120);
+      return `
+      <div class="idea-card">
+        ${parsed.chartImg ? `<img src="${parsed.chartImg}" onerror="this.remove()" class="idea-card-img">` : ""}
+        <div class="idea-card-body">
+          ${parsed.symbol ? `<span class="idea-symbol-badge">${parsed.symbol}</span>` : ""}
+          <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
+          ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 120 ? "..." : ""}</div>` : ""}
+          <div class="idea-card-meta">
+            ${parsed.avatar ? `<img src="${parsed.avatar}" onerror="this.remove()">` : ""}
+            ${parsed.author && parsed.authorLink ? `<a href="${parsed.authorLink}" target="_blank" rel="noopener">${parsed.author}</a>` : (parsed.author || "TradingView")}
+            <span>· ${fmtRssDate(it.pubDate)}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+    setUpdated("tvIdeasUpdated", Date.now());
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat TradingView Ideas, coba refresh beberapa saat lagi.</span></div>`;
+  }
+}
+
 async function loadInsightOpinionFeeds() {
   const targets = [
     { el: "insight_crypto_opinion", updEl: "insightCryptoUpdated", sources: [
