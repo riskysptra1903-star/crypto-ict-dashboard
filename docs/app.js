@@ -706,6 +706,7 @@ const RSS2JSON_API_KEY_2 = "fhl38do5h4uwn73vnyuevxkkhvqbshxz192utx9p";
 const KEY2_URLS = new Set([
   "https://cointelegraph.com/rss/category/analysis",
   "https://www.tradingview.com/feed/",
+  "https://www.fxstreet.com/rss/news",
 ]);
 const NEWS_CACHE_TTL_MS = 6 * 60 * 1000;
 const NEWS_FEED_CACHE = {};
@@ -950,17 +951,31 @@ async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    // Khusus TradingView Ideas asli (chart + coretan dari trader komunitas) --
-    // JANGAN dicampur artikel/berita tertulis (CoinTelegraph dkk), itu tempatnya
-    // di tab News. Kalau kategori tertentu (mis. Crypto) kosong sesaat, itu memang
-    // keterbatasan feed sumbernya (lihat note-box), bukan diisi konten lain.
-    const tvItems = await fetchFeedCached("https://www.tradingview.com/feed/");
+    // TradingView Ideas asli (chart + coretan dari trader komunitas) + FXStreet
+    // (analisis/price forecast tertulis dari analis bank/strategist bernama asli,
+    // mis. "- UOB", "- Danske Bank" -- BUKAN artikel umum kayak CoinTelegraph yang
+    // sudah dikeluarkan dari sini). Kalau kategori tertentu (mis. Crypto) kosong
+    // sesaat, itu memang keterbatasan feed sumbernya (lihat note-box).
+    const [tvItems, fxItems] = await Promise.all([
+      fetchFeedCached("https://www.tradingview.com/feed/"),
+      fetchFeedCached("https://www.fxstreet.com/rss/news"),
+    ]);
     const fresh = tvItems.slice(0, 20).map(it => {
       const parsed = parseTvIdea(it);
       return { it, parsed, category: classifyInstrument(parsed.symbol, it.title), source: "TradingView" };
     });
+    const fxFresh = fxItems.slice(0, 15).map(it => {
+      const m = it.title.match(/[–-]\s*([A-Za-z .&]+)$/);
+      const analyst = m ? m[1].trim() : null;
+      return {
+        it,
+        parsed: { avatar: null, author: analyst, authorLink: null, symbol: null, chartImg: extractThumb(it) },
+        category: classifyInstrument(null, it.title),
+        source: "FXStreet",
+      };
+    });
     const seen = new Set();
-    const merged = [...fresh, ...loadTvIdeasPool().filter(x => x.source !== "CoinTelegraph")]
+    const merged = [...fresh, ...fxFresh, ...loadTvIdeasPool().filter(x => x.source !== "CoinTelegraph")]
       .filter(x => (seen.has(x.it.link) ? false : (seen.add(x.it.link), true)))
       .sort((a, b) => new Date(b.it.pubDate) - new Date(a.it.pubDate));
     if (merged.length === 0) throw new Error("empty");
