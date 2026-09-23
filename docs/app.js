@@ -874,7 +874,12 @@ function parseTvIdea(item) {
     chartImg: chartImg ? chartImg.getAttribute("src") : null,
   };
 }
-const CRYPTO_KEYWORDS = /\b(BTC|BITCOIN|ETH|ETHEREUM|XRP|SOL|SOLANA|BNB|DOGE|ADA|CARDANO|AVAX|DOT|LINK|LTC|MATIC|SHIB|TRX|TON|SUI|ARB|OP|APT|NEAR|ATOM|UNI|AAVE|CRYPTO|ALTCOIN|COIN)\b/i;
+// Token seperti NEAR/LINK/TON/DOT/ATOM/OP/APT/UNI sengaja DIKELUARKAN meski itu
+// nama coin asli -- kata-kata itu juga kata bahasa Inggris umum ("price near X",
+// "supply chain link", dst) dan kebanyakan salah-klasifikasi berita forex/saham
+// jadi crypto ketimbang benar mendeteksi coin tsb (sudah kejadian nyata: "near"
+// di "control near July 29" ke-detect NEAR Protocol).
+const CRYPTO_KEYWORDS = /\b(BTC|BITCOIN|ETH|ETHEREUM|XRP|SOL|SOLANA|BNB|DOGE|ADA|CARDANO|AVAX|LTC|MATIC|SHIB|TRX|SUI|ARB|AAVE|CRYPTO|ALTCOIN|COIN|CHAINLINK|POLKADOT|TONCOIN)\b/i;
 const FX_KEYWORDS = /\b(EUR|USD|GBP|JPY|AUD|NZD|CAD|CHF|DXY|FOREX|CURRENCY)\b/i;
 const COMMODITY_KEYWORDS = /\b(GOLD|XAU|SILVER|XAG|OIL|WTI|BRENT|USOIL|UKOIL)\b/i;
 function classifyInstrument(symbolText, titleText) {
