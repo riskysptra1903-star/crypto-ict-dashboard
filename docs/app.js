@@ -875,16 +875,41 @@ function filterTvIdeas(category, btnEl) {
   renderTvIdeas(category);
 }
 window.filterTvIdeas = filterTvIdeas;
+// tradingview.com/feed/ cuma kasih ~20 ide TERBARU lintas SEMUA instrumen (tidak
+// bisa difilter per kategori dari sumbernya, sudah dicek langsung -- parameter
+// apapun diabaikan). Jadi kalau lagi kebetulan tidak ada trader yang posting ide
+// crypto dalam 20 ide terakhir, kategori Crypto bisa kosong sesaat. Untuk itu kita
+// simpan akumulasi ide yang pernah kelihatan di localStorage (bukan cuma batch
+// terakhir) supaya makin sering dashboard dibuka, makin lengkap datanya per
+// kategori -- tanpa perlu API berbayar.
+const TV_IDEAS_STORE_KEY = "tvIdeasPool";
+const TV_IDEAS_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+const TV_IDEAS_MAX_ITEMS = 300;
+function loadTvIdeasPool() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(TV_IDEAS_STORE_KEY) || "[]");
+    const cutoff = Date.now() - TV_IDEAS_MAX_AGE_MS;
+    return raw.filter(x => new Date(x.it.pubDate).getTime() >= cutoff);
+  } catch (e) { return []; }
+}
+function saveTvIdeasPool(pool) {
+  try { localStorage.setItem(TV_IDEAS_STORE_KEY, JSON.stringify(pool.slice(0, TV_IDEAS_MAX_ITEMS))); } catch (e) {}
+}
 async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    const items = (await fetchFeedCached("https://www.tradingview.com/feed/")).slice(0, 20);
-    if (items.length === 0) throw new Error("empty");
-    tvIdeasCache = items.map(it => {
+    const fresh = (await fetchFeedCached("https://www.tradingview.com/feed/")).slice(0, 20).map(it => {
       const parsed = parseTvIdea(it);
       return { it, parsed, category: classifyInstrument(parsed.symbol, it.title) };
     });
+    const seen = new Set();
+    const merged = [...fresh, ...loadTvIdeasPool()]
+      .filter(x => (seen.has(x.it.link) ? false : (seen.add(x.it.link), true)))
+      .sort((a, b) => new Date(b.it.pubDate) - new Date(a.it.pubDate));
+    if (merged.length === 0) throw new Error("empty");
+    tvIdeasCache = merged;
+    saveTvIdeasPool(merged);
     const activeBtn = document.querySelector('[data-tvcat].active');
     renderTvIdeas(activeBtn ? activeBtn.dataset.tvcat : "semua");
     setUpdated("tvIdeasUpdated", Date.now());
