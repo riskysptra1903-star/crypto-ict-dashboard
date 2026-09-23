@@ -651,6 +651,45 @@ async function loadRssFeeds() {
   }
 }
 
+function extractThumb(item) {
+  if (item.thumbnail) return item.thumbnail;
+  if (item.enclosure && item.enclosure.link && (item.enclosure.type || "").startsWith("image")) return item.enclosure.link;
+  const m = (item.description || item.content || "").match(/<img[^>]+src="([^"]+)"/i);
+  return m ? m[1] : null;
+}
+async function loadCombinedNewsFeed() {
+  const el = document.getElementById("news_combined");
+  if (!el) return;
+  try {
+    const entries = Object.entries(RSS_SOURCES);
+    const results = await Promise.all(entries.map(([elId, url]) =>
+      fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
+        .then(data => (data.items || []).map(item => ({ ...item, sourceName: data.feed && data.feed.title || elId })))
+        .catch(() => [])
+    ));
+    let items = results.flat();
+    if (items.length === 0) throw new Error("empty");
+    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    items = items.slice(0, 24);
+    el.innerHTML = items.map(it => {
+      const thumb = extractThumb(it);
+      const snippet = stripHtml(it.description || "").slice(0, 140);
+      return `
+      <div class="mini-row" style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
+        ${thumb ? `<img src="${thumb}" onerror="this.remove()" style="width:76px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;">` : ""}
+        <div style="min-width:0;">
+          <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;display:block;">${it.title}</a>
+          ${snippet ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${snippet}${snippet.length >= 140 ? "..." : ""}</div>` : ""}
+          <div style="font-size:10.5px;color:var(--accent);margin-top:3px;">${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
+        </div>
+      </div>`;
+    }).join("");
+    setUpdated("newsCombinedUpdated", Date.now());
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat berita gabungan, coba refresh beberapa saat lagi.</span></div>`;
+  }
+}
+
 /* ============================================================
    CALENDAR: tabel referensi dampak historis (statis)
    ============================================================ */
@@ -699,11 +738,17 @@ async function loadInsightOpinionFeeds() {
       ));
       const items = results.flat();
       if (items.length === 0) throw new Error("empty");
-      el.innerHTML = items.map(it => `
-        <div class="mini-row" style="display:block;">
-          <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;">${it.title}</a>
-          <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;">${it.author ? it.author + " · " : ""}${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
-        </div>`).join("");
+      el.innerHTML = items.map(it => {
+        const thumb = extractThumb(it);
+        return `
+        <div class="mini-row" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);">
+          ${thumb ? `<img src="${thumb}" onerror="this.remove()" style="width:88px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;">` : ""}
+          <div style="min-width:0;">
+            <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;">${it.title}</a>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;">${it.author ? it.author + " · " : ""}${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
+          </div>
+        </div>`;
+      }).join("");
       setUpdated(target.updEl, Date.now());
     } catch (e) {
       el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Sumber ini tidak tersedia saat ini.</span></div>`;
@@ -763,7 +808,13 @@ async function loadTrendingCoins() {
   if (!el) return;
   el.innerHTML = `<div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;
   try {
-    const data = await fetchJson(`${CG_BASE}/search/trending`);
+    const [data, newsResults] = await Promise.all([
+      fetchJson(`${CG_BASE}/search/trending`),
+      Promise.all(["https://www.coindesk.com/arc/outboundfeeds/rss/", "https://cointelegraph.com/rss"].map(f =>
+        fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f)).then(r => r.items || []).catch(() => [])
+      )),
+    ]);
+    const newsItems = newsResults.flat();
     const coins = (data.coins || []).slice(0, 8).map(c => c.item);
 
     // render dulu data teknikal (cepat), fundamental menyusul per-coin (agar tidak nunggu lama / kena rate limit CoinGecko)
@@ -793,12 +844,17 @@ async function loadTrendingCoins() {
         const categories = (detail.categories || []).filter(Boolean).slice(0, 3);
         const homepage = detail.links && detail.links.homepage && detail.links.homepage[0];
         const twitter = detail.links && detail.links.twitter_screen_name;
+        const re = new RegExp("\\b(" + c.symbol + "|" + c.name.split(" ")[0] + ")\\b", "i");
+        const mentions = newsItems.filter(it => re.test(it.title)).slice(0, 2);
         descEl.innerHTML = `
           ${desc ? desc + (desc.length >= 220 ? "..." : "") : "Belum ada deskripsi proyek dari CoinGecko."}
           <div class="coin-card-tags">${categories.map(cat => `<span class="coin-tag">${cat}</span>`).join("")}</div>
           <div class="coin-card-links">
             ${homepage ? `<a href="${homepage}" target="_blank" rel="noopener">🔗 Website resmi</a>` : ""}
             ${twitter ? `<a href="https://twitter.com/${twitter}" target="_blank" rel="noopener">🐦 Twitter</a>` : ""}
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-dim);">
+            ${mentions.length ? "📰 Disebut di berita: " + mentions.map(m => `<a href="${m.link}" target="_blank" rel="noopener" style="color:var(--accent);">${m.title}</a>`).join(" · ") : "📰 Belum disebut di berita RSS yang kita pantau (bukan berarti tidak penting)."}
           </div>`;
       } catch (e) {
         const descEl = document.getElementById(`trend_desc_${c.id}`);

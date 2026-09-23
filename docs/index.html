@@ -253,6 +253,7 @@
     <button class="tab" data-tab="crypto"><span class="tab-icon">🪙</span><span class="tab-label">Crypto</span></button>
     <button class="tab" data-tab="futures"><span class="tab-icon">📊</span><span class="tab-label">Futures Data</span></button>
     <button class="tab" data-tab="forex"><span class="tab-icon">💱</span><span class="tab-label">Forex & Commodities</span></button>
+    <button class="tab" data-tab="stocks"><span class="tab-icon">🏦</span><span class="tab-label">Saham & ETF</span></button>
     <button class="tab" data-tab="bubbles"><span class="tab-icon">🫧</span><span class="tab-label">Bubbles</span></button>
     <button class="tab" data-tab="news"><span class="tab-icon">📰</span><span class="tab-label">News</span></button>
     <button class="tab" data-tab="calendar"><span class="tab-icon">📅</span><span class="tab-label">Calendar</span></button>
@@ -373,6 +374,7 @@
   </div>
   <div class="card">
     <h3>Trending Coins (24h)</h3>
+    <div class="note-box">Daftar ini dari CoinGecko Trending — coin dengan volume PENCARIAN tertinggi 24 jam terakhir (sinyal minat pasar yang real, BUKAN prediksi harga, BUKAN skor akurasi). Baris "Disebut di berita" cuma mencocokkan judul artikel RSS asli yang menyebut nama coin — apa adanya, tanpa penilaian benar/salah dari kami. Riset & keputusan tetap di tangan Anda.</div>
     <div class="warn-box">Coin trending/gainer tinggi seringkali volatil ekstrem dan rawan pump-and-dump, terutama meme coin market cap kecil — riset mendalam sebelum entry, jangan FOMO.</div>
     <span class="updated-tag" id="trendingUpdated">terakhir update: -</span>
     <div id="trendingListBody"><div class="skeleton skeleton-row"></div></div>
@@ -448,6 +450,25 @@
   </div>
 </div>
 
+<!-- SAHAM & ETF -->
+<div id="tab-stocks" class="panel">
+  <div class="card">
+    <div class="note-box">Quote & chart real-time dari TradingView (data publik, delay bursa standar). Bukan bagian dari watchlist/strategi ICT Sweep+CISD kita — cuma pemantauan pasar tambahan.</div>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      { "colorTheme": "dark", "dateRange": "12M", "showChart": true, "locale": "id", "isTransparent": true, "showSymbolLogo": true, "width": "100%", "height": "480",
+        "tabs": [
+          {"title":"Saham IDX","symbols":[{"s":"IDX:BBCA","d":"BBCA"},{"s":"IDX:BBRI","d":"BBRI"},{"s":"IDX:TLKM","d":"TLKM"},{"s":"IDX:ASII","d":"ASII"},{"s":"IDX:BMRI","d":"BMRI"}]},
+          {"title":"Saham AS","symbols":[{"s":"NASDAQ:AAPL","d":"AAPL"},{"s":"NASDAQ:NVDA","d":"NVDA"},{"s":"NASDAQ:MSFT","d":"MSFT"},{"s":"NASDAQ:TSLA","d":"TSLA"}]},
+          {"title":"Exposure China","symbols":[{"s":"NYSE:BABA","d":"BABA (Alibaba)"},{"s":"AMEX:FXI","d":"FXI (China Large-Cap ETF)"},{"s":"NASDAQ:KWEB","d":"KWEB (China Internet ETF)"}]},
+          {"title":"ETF Populer","symbols":[{"s":"AMEX:SPY","d":"SPY (S&P 500)"},{"s":"NASDAQ:QQQ","d":"QQQ (Nasdaq 100)"},{"s":"AMEX:VOO","d":"VOO (Vanguard S&P 500)"},{"s":"AMEX:GLD","d":"GLD (Gold Trust)"}]}
+        ] }
+      </script>
+    </div>
+  </div>
+</div>
+
 <!-- BUBBLES -->
 <div id="tab-bubbles" class="panel">
   <div class="card" style="padding:0; overflow:hidden;">
@@ -463,12 +484,21 @@
     <div id="weekAheadList" style="margin-top:10px;"><div class="skeleton skeleton-row"></div></div>
   </div>
   <div class="subtabs">
-    <button class="subtab active" data-sub="news-dunia">Dunia</button>
-    <button class="subtab" data-sub="news-crypto">Crypto</button>
-    <button class="subtab" data-sub="news-forex">Forex</button>
-    <button class="subtab" data-sub="news-rss">RSS Multi-Sumber</button>
+    <button class="subtab active" data-sub="news-semua">Semua Berita</button>
+    <button class="subtab" data-sub="news-dunia">Widget Dunia</button>
+    <button class="subtab" data-sub="news-crypto">Widget Crypto</button>
+    <button class="subtab" data-sub="news-forex">Widget Forex</button>
+    <button class="subtab" data-sub="news-rss">Per Sumber</button>
   </div>
-  <div id="news-dunia" class="subpanel active">
+  <div id="news-semua" class="subpanel active">
+    <div class="card">
+      <h3>Gabungan 5 Sumber, Urut Terbaru</h3>
+      <span class="updated-tag" id="newsCombinedUpdated">terakhir update: -</span>
+      <div id="news_combined" style="margin-top:8px;"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div>
+    </div>
+    <div class="note-box">Sumber: CoinDesk, CoinTelegraph, ForexLive, MarketWatch, CNBC — semua RSS resmi masing-masing platform, digabung & diurutkan berdasarkan waktu publikasi. Investing.com, Reuters, DailyFX sudah dicek langsung (bukan diasumsikan) dan sampai saat ini tidak punya RSS publik gratis yang bisa diakses dari browser. Bloomberg tidak menyediakan RSS gratis untuk kontennya sendiri.</div>
+  </div>
+  <div id="news-dunia" class="subpanel">
     <div class="card">
       <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
@@ -800,7 +830,7 @@
     forex: () => loadForexTab(),
     sentiment: () => loadSentimentTab(),
     performance: () => loadPerformanceTab(),
-    news: () => { loadWeekAhead(); loadRssFeeds(); },
+    news: () => { loadWeekAhead(); loadRssFeeds(); loadCombinedNewsFeed(); },
     calendar: () => renderHistoricalImpact(),
     jurnal: () => renderJournal(),
     insight: () => loadInsightOpinionFeeds(),
