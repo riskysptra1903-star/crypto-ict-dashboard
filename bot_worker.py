@@ -340,14 +340,18 @@ def main_once(state, verbose=True):
 
 
 def maybe_heartbeat(state):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Patokan tanggal pakai WITA (UTC+8, zona waktu user), bukan UTC -- supaya
+    # heartbeat harian "reset" pas tengah malam WITA, sesuai jam HP user, bukan
+    # jam 08:00 WITA (yang sebelumnya bikin bingung krn ganti-tanggal-nya UTC).
+    now_wita = datetime.now(timezone.utc) + pd.Timedelta(hours=8)
+    today = now_wita.strftime("%Y-%m-%d")
     if state.get("_heartbeat_date") == today:
         return
     log_df = load_log()
     n_open = (log_df["status"] == "OPEN").sum() if len(log_df) else 0
     msg = (
         f"[STATUS] Bot Crypto ICT Sweep+CISD sedang RUNNING (di server, bukan laptop lagi)\n"
-        f"Waktu cek (WITA): {(datetime.now(timezone.utc) + pd.Timedelta(hours=8)).strftime('%Y-%m-%d %H:%M')}\n"
+        f"Waktu cek (WITA): {now_wita.strftime('%Y-%m-%d %H:%M')}\n"
         f"Pair dipantau: {len(SYMBOLS)} coin\n"
         f"Trade sedang OPEN: {n_open}\n"
         f"Ekspektasi backtest: ~{BENCHMARK_TRADES_PER_MONTH} trade/bulan, WR {BENCHMARK_WR}%, PF {BENCHMARK_PF}"

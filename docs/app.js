@@ -573,15 +573,16 @@ function isUsDst(date) {
   const y = date.getUTCFullYear();
   return date >= nthSundayOfMonth(y, 2, 2) && date < nthSundayOfMonth(y, 10, 1);
 }
-// Konversi jam rilis data AS (ET) ke WIB, otomatis menyesuaikan DST per tanggal
+// Konversi jam rilis data AS (ET) ke WITA (zona waktu user, sama dgn bot Telegram),
+// otomatis menyesuaikan DST per tanggal
 function etToWib(etHour, etMinute, date) {
-  const offsetHours = isUsDst(date) ? 11 : 12; // EDT(UTC-4)->WIB(UTC+7)=11 | EST(UTC-5)->WIB=12
+  const offsetHours = isUsDst(date) ? 12 : 13; // EDT(UTC-4)->WITA(UTC+8)=12 | EST(UTC-5)->WITA=13
   let totalMin = etHour * 60 + etMinute + offsetHours * 60;
   const rollover = Math.floor(totalMin / (24 * 60));
   totalMin = totalMin % (24 * 60);
   const h = String(Math.floor(totalMin / 60)).padStart(2, "0");
   const m = String(totalMin % 60).padStart(2, "0");
-  return rollover > 0 ? `${h}:${m} WIB (dini hari, hari berikutnya)` : `${h}:${m} WIB`;
+  return rollover > 0 ? `${h}:${m} WITA (dini hari, hari berikutnya)` : `${h}:${m} WITA`;
 }
 function buildKnownEvents() {
   const now = new Date();
@@ -597,19 +598,19 @@ function buildKnownEvents() {
   }
   events.push({
     date: null, name: "FOMC Rate Decision", approx: true,
-    note: "Biasanya rilis ~01:00–02:00 WIB dini hari (14:00 waktu AS/ET). Jadwal pasti diumumkan jauh hari oleh The Fed, ~8x/tahun — cek tanggal PASTI di widget Calendar di bawah. Historically: nada hawkish/naik suku bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya.",
+    note: "Biasanya rilis ~02:00–03:00 WITA dini hari (14:00 waktu AS/ET). Jadwal pasti diumumkan jauh hari oleh The Fed, ~8x/tahun — cek tanggal PASTI di widget Calendar di bawah. Historically: nada hawkish/naik suku bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya.",
   });
   events.push({
     date: null, name: "CPI AS (Inflasi)", approx: true,
-    note: "Biasanya rilis ~19:30–20:30 WIB (08:30 waktu AS/ET), sekitar minggu ke-2 tiap bulan — cek tanggal PASTI di widget Calendar. Historically: inflasi di atas ekspektasi → USD naik, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
+    note: "Biasanya rilis ~20:30–21:30 WITA (08:30 waktu AS/ET), sekitar minggu ke-2 tiap bulan — cek tanggal PASTI di widget Calendar. Historically: inflasi di atas ekspektasi → USD naik, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
   });
   events.push({
     date: null, name: "PPI AS (Harga Produsen)", approx: true,
-    note: "Biasanya rilis ~19:30 WIB (08:30 waktu AS/ET), sehari-dua sebelum/sesudah CPI — cek tanggal PASTI di widget Calendar. Sinyal awal tekanan inflasi, arah dampak mirip CPI tapi biasanya reaksi pasar lebih kecil.",
+    note: "Biasanya rilis ~20:30 WITA (08:30 waktu AS/ET), sehari-dua sebelum/sesudah CPI — cek tanggal PASTI di widget Calendar. Sinyal awal tekanan inflasi, arah dampak mirip CPI tapi biasanya reaksi pasar lebih kecil.",
   });
   events.push({
     date: null, name: "Retail Sales AS", approx: true,
-    note: "Biasanya rilis ~19:30 WIB (08:30 waktu AS/ET), pertengahan bulan — cek tanggal PASTI di widget Calendar. Di atas ekspektasi → USD menguat (ekonomi kuat), Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
+    note: "Biasanya rilis ~20:30 WITA (08:30 waktu AS/ET), pertengahan bulan — cek tanggal PASTI di widget Calendar. Di atas ekspektasi → USD menguat (ekonomi kuat), Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
   });
   return events.filter(e => e.date === null || e.date >= new Date(now.getTime() - 86400000)).sort((a, b) => (a.date || new Date(2099, 0)) - (b.date || new Date(2099, 0)));
 }
@@ -840,14 +841,14 @@ window.handleThumbError = function (imgEl) {
    CALENDAR: tabel referensi dampak historis (statis)
    ============================================================ */
 const HISTORICAL_IMPACT = [
-  ["Non-Farm Payroll (NFP)", "~19:30/20:30 WIB* (08:30 ET)", "Jauh di atas ekspektasi → USD cenderung menguat tajam, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
-  ["CPI / Inflasi AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → DXY naik, Gold & crypto cenderung tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
-  ["PPI (Harga Produsen) AS", "~19:30/20:30 WIB* (08:30 ET)", "Sinyal awal tekanan inflasi — arah dampak mirip CPI, biasanya reaksi pasar lebih kecil."],
-  ["FOMC / Interest Rate Decision", "~01:00/02:00 WIB* dini hari (14:00 ET)", "Nada hawkish/naik bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya. Kejutan vs ekspektasi pasar yang paling menggerakkan harga."],
-  ["GDP AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → USD cenderung menguat jangka pendek, Gold & crypto tertekan sesaat."],
-  ["PMI (Manufacturing/Services)", "~20:45–21:45 WIB* (09:45 ET)", "Di atas 50 & naik dari sebelumnya → sentimen risk-on, mendukung USD & saham terkait, kadang juga crypto (risk-on asset)."],
-  ["Unemployment Rate AS", "~19:30/20:30 WIB* (08:30 ET, bareng NFP)", "Naik dari ekspektasi → USD melemah, Gold & crypto cenderung naik."],
-  ["Retail Sales AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → USD menguat, sinyal konsumsi kuat, Gold & crypto tertekan sesaat."],
+  ["Non-Farm Payroll (NFP)", "~20:30/21:30 WITA* (08:30 ET)", "Jauh di atas ekspektasi → USD cenderung menguat tajam, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["CPI / Inflasi AS", "~20:30/21:30 WITA* (08:30 ET)", "Di atas ekspektasi → DXY naik, Gold & crypto cenderung tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["PPI (Harga Produsen) AS", "~20:30/21:30 WITA* (08:30 ET)", "Sinyal awal tekanan inflasi — arah dampak mirip CPI, biasanya reaksi pasar lebih kecil."],
+  ["FOMC / Interest Rate Decision", "~02:00/03:00 WITA* dini hari (14:00 ET)", "Nada hawkish/naik bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya. Kejutan vs ekspektasi pasar yang paling menggerakkan harga."],
+  ["GDP AS", "~20:30/21:30 WITA* (08:30 ET)", "Di atas ekspektasi → USD cenderung menguat jangka pendek, Gold & crypto tertekan sesaat."],
+  ["PMI (Manufacturing/Services)", "~21:45–22:45 WITA* (09:45 ET)", "Di atas 50 & naik dari sebelumnya → sentimen risk-on, mendukung USD & saham terkait, kadang juga crypto (risk-on asset)."],
+  ["Unemployment Rate AS", "~20:30/21:30 WITA* (08:30 ET, bareng NFP)", "Naik dari ekspektasi → USD melemah, Gold & crypto cenderung naik."],
+  ["Retail Sales AS", "~20:30/21:30 WITA* (08:30 ET)", "Di atas ekspektasi → USD menguat, sinyal konsumsi kuat, Gold & crypto tertekan sesaat."],
 ];
 function renderHistoricalImpact() {
   const el = document.getElementById("historicalImpactBody");
