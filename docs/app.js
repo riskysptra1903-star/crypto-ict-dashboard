@@ -813,8 +813,11 @@ function extractThumb(item) {
 // sama sekali di RSS-nya (sudah dicek langsung) -- placeholder ini cuma dekorasi
 // visual (gradient + huruf awal sumber), BUKAN gambar asli artikel, biar kartu
 // tetap konsisten tanpa fabrikasi konten.
+function escAttr(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
 function thumbOrPlaceholder(thumb, sourceName) {
-  if (thumb) return `<img src="${thumb}" onerror="this.outerHTML='${placeholderHtml(sourceName).replace(/'/g, "\\'")}'" class="idea-card-img">`;
+  if (thumb) return `<img src="${escAttr(thumb)}" data-fallback-name="${escAttr(sourceName)}" onerror="window.handleThumbError(this)" class="idea-card-img">`;
   return placeholderHtml(sourceName);
 }
 function placeholderHtml(sourceName) {
@@ -824,6 +827,15 @@ function placeholderHtml(sourceName) {
   for (const ch of label) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
   return `<div class="idea-card-img idea-card-placeholder" style="background:linear-gradient(135deg, hsl(${hash},40%,22%), hsl(${(hash + 45) % 360},40%,14%));">${initial}</div>`;
 }
+// Handler onerror gambar: ganti ke placeholder lewat DOM API (bukan string HTML di
+// dalam atribut onerror) supaya tidak ada masalah escaping tanda kutip yang bisa
+// bikin markup rusak dan teks mentah muncul di halaman.
+window.handleThumbError = function (imgEl) {
+  const name = imgEl.getAttribute("data-fallback-name") || "?";
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = placeholderHtml(name);
+  imgEl.replaceWith(wrapper.firstElementChild);
+};
 /* ============================================================
    CALENDAR: tabel referensi dampak historis (statis)
    ============================================================ */
