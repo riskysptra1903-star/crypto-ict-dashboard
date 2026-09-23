@@ -562,6 +562,27 @@ function getFirstFridayOfMonth(year, month) {
   d.setUTCDate(1 + offset);
   return d;
 }
+// US DST: mulai Minggu ke-2 Maret, berakhir Minggu ke-1 November (aturan resmi sejak 2007)
+function nthSundayOfMonth(year, month, n) {
+  const d = new Date(Date.UTC(year, month, 1));
+  const offset = (7 - d.getUTCDay()) % 7;
+  d.setUTCDate(1 + offset + (n - 1) * 7);
+  return d;
+}
+function isUsDst(date) {
+  const y = date.getUTCFullYear();
+  return date >= nthSundayOfMonth(y, 2, 2) && date < nthSundayOfMonth(y, 10, 1);
+}
+// Konversi jam rilis data AS (ET) ke WIB, otomatis menyesuaikan DST per tanggal
+function etToWib(etHour, etMinute, date) {
+  const offsetHours = isUsDst(date) ? 11 : 12; // EDT(UTC-4)->WIB(UTC+7)=11 | EST(UTC-5)->WIB=12
+  let totalMin = etHour * 60 + etMinute + offsetHours * 60;
+  const rollover = Math.floor(totalMin / (24 * 60));
+  totalMin = totalMin % (24 * 60);
+  const h = String(Math.floor(totalMin / 60)).padStart(2, "0");
+  const m = String(totalMin % 60).padStart(2, "0");
+  return rollover > 0 ? `${h}:${m} WIB (dini hari, hari berikutnya)` : `${h}:${m} WIB`;
+}
 function buildKnownEvents() {
   const now = new Date();
   const events = [];
@@ -569,16 +590,33 @@ function buildKnownEvents() {
     const y = now.getUTCFullYear();
     const mo = now.getUTCMonth() + m;
     const nfp = getFirstFridayOfMonth(y, mo);
-    events.push({ date: nfp, name: "Non-Farm Payroll (NFP) AS", note: "Selalu Jumat pertama tiap bulan — historically bikin USD & Gold bergerak besar." });
+    events.push({
+      date: nfp, name: "Non-Farm Payroll (NFP) AS", time: etToWib(8, 30, nfp),
+      note: `Rilis ${etToWib(8, 30, nfp)} (08:30 waktu AS/ET). Historically: data JAUH di atas ekspektasi → USD menguat tajam, Gold & crypto tertekan sesaat. Data di bawah ekspektasi → USD melemah, Gold & crypto cenderung naik.`,
+    });
   }
-  events.push({ date: null, name: "FOMC Rate Decision", note: "Jadwal FOMC diumumkan resmi jauh hari oleh The Fed — cek tanggal PASTI di tab Calendar, biasanya ~8x/tahun.", approx: true });
-  events.push({ date: null, name: "CPI AS (Inflasi)", note: "Biasanya dirilis sekitar minggu ke-2 tiap bulan — cek tanggal PASTI di tab Calendar.", approx: true });
+  events.push({
+    date: null, name: "FOMC Rate Decision", approx: true,
+    note: "Biasanya rilis ~01:00–02:00 WIB dini hari (14:00 waktu AS/ET). Jadwal pasti diumumkan jauh hari oleh The Fed, ~8x/tahun — cek tanggal PASTI di widget Calendar di bawah. Historically: nada hawkish/naik suku bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya.",
+  });
+  events.push({
+    date: null, name: "CPI AS (Inflasi)", approx: true,
+    note: "Biasanya rilis ~19:30–20:30 WIB (08:30 waktu AS/ET), sekitar minggu ke-2 tiap bulan — cek tanggal PASTI di widget Calendar. Historically: inflasi di atas ekspektasi → USD naik, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
+  });
+  events.push({
+    date: null, name: "PPI AS (Harga Produsen)", approx: true,
+    note: "Biasanya rilis ~19:30 WIB (08:30 waktu AS/ET), sehari-dua sebelum/sesudah CPI — cek tanggal PASTI di widget Calendar. Sinyal awal tekanan inflasi, arah dampak mirip CPI tapi biasanya reaksi pasar lebih kecil.",
+  });
+  events.push({
+    date: null, name: "Retail Sales AS", approx: true,
+    note: "Biasanya rilis ~19:30 WIB (08:30 waktu AS/ET), pertengahan bulan — cek tanggal PASTI di widget Calendar. Di atas ekspektasi → USD menguat (ekonomi kuat), Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya.",
+  });
   return events.filter(e => e.date === null || e.date >= new Date(now.getTime() - 86400000)).sort((a, b) => (a.date || new Date(2099, 0)) - (b.date || new Date(2099, 0)));
 }
-function loadWeekAhead() {
-  const el = document.getElementById("weekAheadList");
+function loadWeekAhead(elId = "weekAheadList", limit = 5) {
+  const el = document.getElementById(elId);
   if (!el) return;
-  const events = buildKnownEvents().slice(0, 5);
+  const events = buildKnownEvents().slice(0, limit);
   el.innerHTML = events.map(e => {
     const dateStr = e.date ? e.date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }) : "Tanggal bervariasi";
     return `<div class="mini-row"><span><b>${dateStr}</b> — ${e.name}${e.approx ? " *" : ""}</span></div>
@@ -628,6 +666,10 @@ async function loadOverviewBotSummary() {
 
 /* ============================================================
    NEWS: RSS multi-sumber via rss2json (keyless, free tier)
+   Kategori dipisah per jenis instrumen (crypto/forex/saham/dunia/
+   ekonomi) + Bloomberg & Investing.com disurfacekan lewat Google
+   News search (agregator resmi Google, bukan scraping situs
+   mereka langsung -- dicek jalan per 23 Sep 2026).
    ============================================================ */
 const RSS_SOURCES = {
   rss_coindesk: "https://www.coindesk.com/arc/outboundfeeds/rss/",
@@ -651,61 +693,98 @@ async function loadRssFeeds() {
   }
 }
 
+function gnews(q) { return "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=en-US&gl=US&ceid=US:en"; }
+const NEWS_FEED_CACHE = {};
+function fetchFeedCached(url) {
+  if (!NEWS_FEED_CACHE[url]) {
+    NEWS_FEED_CACHE[url] = fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
+      .then(d => d.items || [])
+      .catch(() => []);
+  }
+  return NEWS_FEED_CACHE[url];
+}
+const NEWS_SOURCE_SETS = {
+  crypto: [
+    { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/" },
+    { name: "CoinTelegraph", url: "https://cointelegraph.com/rss" },
+    { name: "Google News", url: gnews("bitcoin OR crypto OR cryptocurrency") },
+  ],
+  forex: [
+    { name: "ForexLive", url: "https://www.forexlive.com/feed/news" },
+    { name: "Google News", url: gnews("forex OR dollar index OR currency market") },
+  ],
+  saham: [
+    { name: "Yahoo Finance", url: "https://finance.yahoo.com/rss/headline?s=AAPL" },
+    { name: "Google News", url: gnews("wall street OR stock market OR IHSG saham Indonesia") },
+  ],
+  dunia: [
+    { name: "BBC Business", url: "https://feeds.bbci.co.uk/news/business/rss.xml" },
+    { name: "Google News", url: gnews("world news") },
+  ],
+  ekonomi: [
+    { name: "CNBC", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" },
+    { name: "MarketWatch", url: "https://www.marketwatch.com/rss/topstories" },
+    { name: "Google News", url: gnews("global economy OR inflation OR central bank interest rate") },
+  ],
+  bigmedia: [
+    { name: "Bloomberg (via Google News)", url: gnews("site:bloomberg.com crypto OR forex OR economy OR markets") },
+    { name: "Investing.com (via Google News)", url: gnews("site:investing.com crypto OR forex OR stocks") },
+  ],
+};
+function renderIdeaCards(items) {
+  return items.map(it => {
+    const thumb = extractThumb(it);
+    const snippet = stripHtml(it.description || "").slice(0, 110);
+    return `
+    <div class="idea-card">
+      ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
+      <div class="idea-card-body">
+        <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
+        ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
+        <div class="idea-card-meta"><span>${it.sourceName} · ${fmtRssDate(it.pubDate)}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+async function loadNewsCategory(containerId, statusId, sourceKeys) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  try {
+    const feeds = sourceKeys.flatMap(k => NEWS_SOURCE_SETS[k] || []);
+    const results = await Promise.all(feeds.map(f => fetchFeedCached(f.url).then(items => items.map(it => ({ ...it, sourceName: f.name })))));
+    let items = results.flat();
+    if (items.length === 0) throw new Error("empty");
+    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    el.innerHTML = renderIdeaCards(items.slice(0, 24));
+    if (statusId) setUpdated(statusId, Date.now());
+  } catch (e) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat, coba refresh beberapa saat lagi.</span></div>`;
+  }
+}
+
 function extractThumb(item) {
   if (item.thumbnail) return item.thumbnail;
   if (item.enclosure && item.enclosure.link && (item.enclosure.type || "").startsWith("image")) return item.enclosure.link;
   const m = (item.description || item.content || "").match(/<img[^>]+src="([^"]+)"/i);
   return m ? m[1] : null;
 }
-async function loadCombinedNewsFeed() {
-  const el = document.getElementById("news_combined");
-  if (!el) return;
-  try {
-    const entries = Object.entries(RSS_SOURCES);
-    const results = await Promise.all(entries.map(([elId, url]) =>
-      fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
-        .then(data => (data.items || []).map(item => ({ ...item, sourceName: data.feed && data.feed.title || elId })))
-        .catch(() => [])
-    ));
-    let items = results.flat();
-    if (items.length === 0) throw new Error("empty");
-    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-    items = items.slice(0, 24);
-    el.innerHTML = items.map(it => {
-      const thumb = extractThumb(it);
-      const snippet = stripHtml(it.description || "").slice(0, 110);
-      return `
-      <div class="idea-card">
-        ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
-        <div class="idea-card-body">
-          <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
-          ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
-          <div class="idea-card-meta">${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
-        </div>
-      </div>`;
-    }).join("");
-    setUpdated("newsCombinedUpdated", Date.now());
-  } catch (e) {
-    el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat berita gabungan, coba refresh beberapa saat lagi.</span></div>`;
-  }
-}
-
 /* ============================================================
    CALENDAR: tabel referensi dampak historis (statis)
    ============================================================ */
 const HISTORICAL_IMPACT = [
-  ["Non-Farm Payroll (NFP)", "Jauh di atas ekspektasi → USD cenderung menguat tajam, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
-  ["CPI / Inflasi", "Di atas ekspektasi → DXY naik, Gold & crypto cenderung tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
-  ["FOMC / Interest Rate Decision", "Nada hawkish/naik bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya. Kejutan vs ekspektasi pasar yang paling menggerakkan harga."],
-  ["GDP", "Di atas ekspektasi → mata uang terkait cenderung menguat jangka pendek."],
-  ["PMI (Manufacturing/Services)", "Di atas 50 & naik dari sebelumnya → sentimen risk-on, mendukung mata uang & saham terkait."],
-  ["Unemployment Rate", "Naik dari ekspektasi → mata uang terkait melemah."],
-  ["Retail Sales", "Di atas ekspektasi → mata uang menguat, sinyal konsumsi kuat."],
+  ["Non-Farm Payroll (NFP)", "~19:30/20:30 WIB* (08:30 ET)", "Jauh di atas ekspektasi → USD cenderung menguat tajam, Gold & crypto tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["CPI / Inflasi AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → DXY naik, Gold & crypto cenderung tertekan sesaat. Di bawah ekspektasi → kebalikannya."],
+  ["PPI (Harga Produsen) AS", "~19:30/20:30 WIB* (08:30 ET)", "Sinyal awal tekanan inflasi — arah dampak mirip CPI, biasanya reaksi pasar lebih kecil."],
+  ["FOMC / Interest Rate Decision", "~01:00/02:00 WIB* dini hari (14:00 ET)", "Nada hawkish/naik bunga → USD menguat, Gold & crypto tertekan. Nada dovish/pause → kebalikannya. Kejutan vs ekspektasi pasar yang paling menggerakkan harga."],
+  ["GDP AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → USD cenderung menguat jangka pendek, Gold & crypto tertekan sesaat."],
+  ["PMI (Manufacturing/Services)", "~20:45–21:45 WIB* (09:45 ET)", "Di atas 50 & naik dari sebelumnya → sentimen risk-on, mendukung USD & saham terkait, kadang juga crypto (risk-on asset)."],
+  ["Unemployment Rate AS", "~19:30/20:30 WIB* (08:30 ET, bareng NFP)", "Naik dari ekspektasi → USD melemah, Gold & crypto cenderung naik."],
+  ["Retail Sales AS", "~19:30/20:30 WIB* (08:30 ET)", "Di atas ekspektasi → USD menguat, sinyal konsumsi kuat, Gold & crypto tertekan sesaat."],
 ];
 function renderHistoricalImpact() {
   const el = document.getElementById("historicalImpactBody");
   if (!el || el.dataset.loaded) return;
-  el.innerHTML = HISTORICAL_IMPACT.map(([name, note]) => `<tr><td style="white-space:normal;font-weight:600;">${name}</td><td style="white-space:normal;color:var(--text-dim);">${note}</td></tr>`).join("");
+  el.innerHTML = HISTORICAL_IMPACT.map(([name, time, note]) => `<tr><td style="white-space:normal;font-weight:600;">${name}</td><td style="white-space:normal;color:var(--text-dim);">${time}</td><td style="white-space:normal;color:var(--text-dim);">${note}</td></tr>`).join("");
   el.dataset.loaded = "1";
 }
 
@@ -739,31 +818,63 @@ function parseTvIdea(item) {
     chartImg: chartImg ? chartImg.getAttribute("src") : null,
   };
 }
+const CRYPTO_KEYWORDS = /\b(BTC|BITCOIN|ETH|ETHEREUM|XRP|SOL|SOLANA|BNB|DOGE|ADA|CARDANO|AVAX|DOT|LINK|LTC|MATIC|SHIB|TRX|TON|SUI|ARB|OP|APT|NEAR|ATOM|UNI|AAVE|CRYPTO|ALTCOIN|COIN)\b/i;
+const FX_KEYWORDS = /\b(EUR|USD|GBP|JPY|AUD|NZD|CAD|CHF|DXY|FOREX|CURRENCY)\b/i;
+const COMMODITY_KEYWORDS = /\b(GOLD|XAU|SILVER|XAG|OIL|WTI|BRENT|USOIL|UKOIL)\b/i;
+function classifyInstrument(symbolText, titleText) {
+  const t = (symbolText || "") + " " + (titleText || "");
+  if (CRYPTO_KEYWORDS.test(t)) return "crypto";
+  if (COMMODITY_KEYWORDS.test(t) || FX_KEYWORDS.test(t)) return "forex";
+  return "saham";
+}
+let tvIdeasCache = [];
+function renderTvIdeas(category) {
+  const el = document.getElementById("tv_ideas_grid");
+  if (!el) return;
+  const filtered = category === "semua" ? tvIdeasCache : tvIdeasCache.filter(x => x.category === category);
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Belum ada ide di kategori ini pada batch data saat ini, coba lagi nanti atau pilih "Semua".</span></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(({ it, parsed }) => {
+    const snippet = stripHtml(it.description || "").slice(0, 120);
+    return `
+    <div class="idea-card">
+      ${parsed.chartImg ? `<img src="${parsed.chartImg}" onerror="this.remove()" class="idea-card-img">` : ""}
+      <div class="idea-card-body">
+        ${parsed.symbol ? `<span class="idea-symbol-badge">${parsed.symbol}</span>` : ""}
+        <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
+        ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 120 ? "..." : ""}</div>` : ""}
+        <div class="idea-card-meta">
+          ${parsed.avatar ? `<img src="${parsed.avatar}" onerror="this.remove()">` : ""}
+          ${parsed.author && parsed.authorLink ? `<a href="${parsed.authorLink}" target="_blank" rel="noopener">${parsed.author}</a>` : (parsed.author || "TradingView")}
+          <span>· ${fmtRssDate(it.pubDate)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function filterTvIdeas(category, btnEl) {
+  if (btnEl) {
+    btnEl.parentElement.querySelectorAll(".subtab").forEach(b => b.classList.remove("active"));
+    btnEl.classList.add("active");
+  }
+  renderTvIdeas(category);
+}
+window.filterTvIdeas = filterTvIdeas;
 async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
     const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.tradingview.com/feed/"));
-    const items = (data.items || []).slice(0, 12);
+    const items = (data.items || []).slice(0, 20);
     if (items.length === 0) throw new Error("empty");
-    el.innerHTML = items.map(it => {
+    tvIdeasCache = items.map(it => {
       const parsed = parseTvIdea(it);
-      const snippet = stripHtml(it.description || "").slice(0, 120);
-      return `
-      <div class="idea-card">
-        ${parsed.chartImg ? `<img src="${parsed.chartImg}" onerror="this.remove()" class="idea-card-img">` : ""}
-        <div class="idea-card-body">
-          ${parsed.symbol ? `<span class="idea-symbol-badge">${parsed.symbol}</span>` : ""}
-          <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
-          ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 120 ? "..." : ""}</div>` : ""}
-          <div class="idea-card-meta">
-            ${parsed.avatar ? `<img src="${parsed.avatar}" onerror="this.remove()">` : ""}
-            ${parsed.author && parsed.authorLink ? `<a href="${parsed.authorLink}" target="_blank" rel="noopener">${parsed.author}</a>` : (parsed.author || "TradingView")}
-            <span>· ${fmtRssDate(it.pubDate)}</span>
-          </div>
-        </div>
-      </div>`;
-    }).join("");
+      return { it, parsed, category: classifyInstrument(parsed.symbol, it.title) };
+    });
+    const activeBtn = document.querySelector('[data-tvcat].active');
+    renderTvIdeas(activeBtn ? activeBtn.dataset.tvcat : "semua");
     setUpdated("tvIdeasUpdated", Date.now());
   } catch (e) {
     el.innerHTML = `<div class="mini-row"><span style="color:var(--red);">Gagal memuat TradingView Ideas, coba refresh beberapa saat lagi.</span></div>`;

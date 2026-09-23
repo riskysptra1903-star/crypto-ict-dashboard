@@ -496,49 +496,68 @@
     <div id="weekAheadList" style="margin-top:10px;"><div class="skeleton skeleton-row"></div></div>
   </div>
   <div class="subtabs">
-    <button class="subtab active" data-sub="news-semua">Semua Berita</button>
-    <button class="subtab" data-sub="news-dunia">Widget Dunia</button>
-    <button class="subtab" data-sub="news-crypto">Widget Crypto</button>
-    <button class="subtab" data-sub="news-forex">Widget Forex</button>
+    <button class="subtab active" data-sub="news-semua">Semua</button>
+    <button class="subtab" data-sub="news-crypto2">Crypto</button>
+    <button class="subtab" data-sub="news-forex2">Forex</button>
+    <button class="subtab" data-sub="news-saham">Saham</button>
+    <button class="subtab" data-sub="news-dunia2">Dunia</button>
+    <button class="subtab" data-sub="news-ekonomi">Ekonomi Dunia</button>
+    <button class="subtab" data-sub="news-fundamental">Analisis Fundamental</button>
     <button class="subtab" data-sub="news-rss">Per Sumber</button>
   </div>
   <div id="news-semua" class="subpanel active">
     <div class="card">
-      <h3>Gabungan 5 Sumber, Urut Terbaru</h3>
+      <h3>Gabungan Semua Kategori, Urut Terbaru</h3>
       <span class="updated-tag" id="newsCombinedUpdated">terakhir update: -</span>
       <div id="news_combined" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div>
     </div>
-    <div class="note-box">Sumber: CoinDesk, CoinTelegraph, ForexLive, MarketWatch, CNBC — semua RSS resmi masing-masing platform, digabung & diurutkan berdasarkan waktu publikasi. Investing.com, Reuters, DailyFX sudah dicek langsung (bukan diasumsikan) dan sampai saat ini tidak punya RSS publik gratis yang bisa diakses dari browser. Bloomberg tidak menyediakan RSS gratis untuk kontennya sendiri.</div>
+    <div class="note-box">Sumber: CoinDesk, CoinTelegraph, ForexLive, MarketWatch, CNBC, BBC Business, Yahoo Finance, + Google News (termasuk hasil dari Bloomberg & Investing.com lewat pencarian Google News resmi — kami tidak scraping situs mereka langsung, dan berlaku sama seperti Google menampilkan hasil pencarian berita pada umumnya). Reuters & DailyFX sudah dicek langsung dan sampai saat ini tidak punya RSS publik gratis.</div>
   </div>
-  <div id="news-dunia" class="subpanel">
+  <div id="news-crypto2" class="subpanel">
     <div class="card">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-        { "feedMode": "all_symbols", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "500", "colorTheme": "dark", "locale": "id" }
-        </script>
-      </div>
+      <h3>Berita Crypto</h3>
+      <div id="news_cat_crypto" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
     </div>
   </div>
-  <div id="news-crypto" class="subpanel">
+  <div id="news-forex2" class="subpanel">
     <div class="card">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-        { "feedMode": "market", "market": "crypto", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "500", "colorTheme": "dark", "locale": "id" }
-        </script>
-      </div>
+      <h3>Berita Forex</h3>
+      <div id="news_cat_forex" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
     </div>
   </div>
-  <div id="news-forex" class="subpanel">
+  <div id="news-saham" class="subpanel">
     <div class="card">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-        { "feedMode": "market", "market": "forex", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "500", "colorTheme": "dark", "locale": "id" }
-        </script>
-      </div>
+      <h3>Berita Saham</h3>
+      <div id="news_cat_saham" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
     </div>
+  </div>
+  <div id="news-dunia2" class="subpanel">
+    <div class="card">
+      <h3>Berita Dunia</h3>
+      <div id="news_cat_dunia" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
+    </div>
+  </div>
+  <div id="news-ekonomi" class="subpanel">
+    <div class="card">
+      <h3>Berita Ekonomi Dunia</h3>
+      <div id="news_cat_ekonomi" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div></div>
+    </div>
+  </div>
+  <div id="news-fundamental" class="subpanel">
+    <div class="card">
+      <div class="warn-box"><b>Opini pihak ketiga, bukan rekomendasi dari dashboard ini.</b> Nama penulis, platform asal, dan tanggal publikasi asli tertera di tiap kartu.</div>
+    </div>
+    <div class="card">
+      <h3>Analisis Fundamental — Crypto</h3>
+      <span class="updated-tag" id="insightCryptoUpdated">terakhir update: -</span>
+      <div id="insight_crypto_opinion" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
+    </div>
+    <div class="card">
+      <h3>Analisis Fundamental — Forex</h3>
+      <span class="updated-tag" id="insightForexUpdated">terakhir update: -</span>
+      <div id="insight_forex_analysis" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
+    </div>
+    <div class="note-box">Sumber: kolom opini/analisis asli dari CoinDesk, CoinTelegraph, ForexLive.</div>
   </div>
   <div id="news-rss" class="subpanel">
     <div class="card">
@@ -561,22 +580,27 @@
       <h3>CNBC (Global Business)</h3>
       <div id="rss_cnbc"><div class="skeleton skeleton-row"></div></div>
     </div>
-    <div class="note-box">Catatan: Bloomberg tidak menyediakan API/RSS gratis untuk kontennya sendiri — dipakai sebagai referensi gaya tampilan saja, bukan sumber data. DailyFX & Reuters juga sudah tidak punya RSS publik yang aktif.</div>
+    <div class="note-box">Catatan: Bloomberg tidak menyediakan API/RSS gratis untuk kontennya sendiri (lihat tab "Semua" untuk cara kami tetap menampilkan headline Bloomberg via Google News). DailyFX & Reuters juga sudah tidak punya RSS publik yang aktif.</div>
   </div>
 </div>
 
 <!-- CALENDAR -->
 <div id="tab-calendar" class="panel">
   <div class="card">
+    <h3>Jadwal Event Terdekat — Bahasa Manusia</h3>
+    <div class="note-box">Tanggal NFP dihitung otomatis (aturan resmi: selalu Jumat pertama tiap bulan). Jam WIB dihitung otomatis mengikuti status DST Amerika saat itu. FOMC/CPI/PPI/Retail Sales tanggal pastinya lihat widget kalender di bawah, jam di sini estimasi berdasarkan kebiasaan rilis.</div>
+    <div id="calendarWeekAheadList" style="margin-top:10px;"><div class="skeleton skeleton-row"></div></div>
+  </div>
+  <div class="card">
     <h3>Referensi Dampak Historis per Jenis Event</h3>
     <div class="warn-box"><b>Pola historis, BUKAN jaminan akan berulang</b> — selalu konfirmasi dengan price action riil saat itu, jangan entry cuma berdasarkan tabel ini.</div>
     <div style="overflow-x:auto;margin-top:10px;">
     <table>
-      <thead><tr><th>Jenis Event</th><th>Kecenderungan Historis</th></tr></thead>
+      <thead><tr><th>Jenis Event</th><th>Jam Rilis Umum (WIB)</th><th>Kecenderungan Historis</th></tr></thead>
       <tbody id="historicalImpactBody"></tbody>
     </table>
     </div>
-    <div class="note-box">Tabel ini referensi statis per JENIS event (bukan otomatis terhubung ke kalender di bawah) — cocokkan manual nama event yang mirip saat kamu lihat kalender di bawah.</div>
+    <div class="note-box">*Dua jam dipisah "/" karena tergantung status DST (Daylight Saving Time) Amerika: jam pertama saat DST aktif (~Mar–Okt), jam kedua saat waktu standar (~Nov–Mar). Tabel ini referensi statis per JENIS event (bukan otomatis terhubung ke kalender di bawah) — cocokkan manual nama event yang mirip saat kamu lihat kalender di bawah.</div>
   </div>
   <div class="card">
     <h3>Economic Calendar</h3>
@@ -619,25 +643,18 @@
 <!-- INSIGHT -->
 <div id="tab-insight" class="panel">
   <div class="card">
-    <div class="warn-box"><b>Opini pihak ketiga, bukan rekomendasi dari dashboard ini.</b> Setiap kartu di bawah menampilkan nama penulis, platform asal, dan tanggal publikasi asli — kami tidak menulis ulang atau menilai kebenarannya.</div>
-  </div>
-  <div class="card">
     <h3>TradingView Ideas — Analisis Teknikal Trader Komunitas</h3>
-    <div class="note-box">Chart, level (support/resistance/fibonacci), dan tulisan analisis di bawah ini dibuat oleh trader komunitas TradingView asli (bukan gambar/tulisan kami) — nama & link profil trader tertera di tiap kartu. Ini opini pribadi masing-masing trader, akurasinya tidak diverifikasi siapapun, BUKAN rekomendasi dari dashboard ini.</div>
+    <div class="note-box">Chart, level (support/resistance/fibonacci), dan tulisan analisis di bawah ini dibuat oleh trader komunitas TradingView asli (bukan gambar/tulisan kami) — nama & link profil trader tertera di tiap kartu. Ini opini pribadi masing-masing trader, akurasinya tidak diverifikasi siapapun, BUKAN rekomendasi dari dashboard ini. Untuk analisis fundamental (berbasis berita/ekonomi), lihat tab News → "Analisis Fundamental".</div>
     <span class="updated-tag" id="tvIdeasUpdated">terakhir update: -</span>
-    <div id="tv_ideas_grid" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
   </div>
-  <div class="card">
-    <h3>Ide & Analisis — Crypto</h3>
-    <span class="updated-tag" id="insightCryptoUpdated">terakhir update: -</span>
-    <div id="insight_crypto_opinion" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
+  <div class="subtabs">
+    <button class="subtab active" data-tvcat="semua" onclick="filterTvIdeas('semua', this)">Semua</button>
+    <button class="subtab" data-tvcat="crypto" onclick="filterTvIdeas('crypto', this)">Crypto</button>
+    <button class="subtab" data-tvcat="forex" onclick="filterTvIdeas('forex', this)">Forex</button>
+    <button class="subtab" data-tvcat="saham" onclick="filterTvIdeas('saham', this)">Saham</button>
   </div>
-  <div class="card">
-    <h3>Ide & Analisis — Forex</h3>
-    <span class="updated-tag" id="insightForexUpdated">terakhir update: -</span>
-    <div id="insight_forex_analysis" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
-  </div>
-  <div class="note-box">Sumber: kolom opini/analisis asli dari CoinDesk, CoinTelegraph, ForexLive. Investing.com & Reuters TIDAK dimasukkan — sudah dicek langsung, kedua platform tidak lagi menyediakan RSS publik gratis. Bloomberg juga tidak dipakai karena tidak ada RSS resmi gratis untuk kontennya.</div>
+  <div class="note-box" style="margin-top:10px;">Kategori di atas hasil pencocokan kata kunci otomatis dari nama simbol (mis. mengandung "USD" tanpa nama mata uang lain = kemungkinan crypto vs forex) — bisa saja tidak 100% akurat untuk simbol yang ambigu.</div>
+  <div id="tv_ideas_grid" class="idea-grid" style="margin-top:10px;"><div class="skeleton skeleton-row"></div></div>
 </div>
 
 <!-- KALKULATOR RISIKO -->
@@ -821,10 +838,20 @@
     forex: () => loadForexTab(),
     sentiment: () => loadSentimentTab(),
     performance: () => loadPerformanceTab(),
-    news: () => { loadWeekAhead(); loadRssFeeds(); loadCombinedNewsFeed(); },
-    calendar: () => renderHistoricalImpact(),
+    news: () => {
+      loadWeekAhead();
+      loadRssFeeds();
+      loadNewsCategory("news_combined", "newsCombinedUpdated", ["crypto", "forex", "saham", "dunia", "ekonomi", "bigmedia"]);
+      loadNewsCategory("news_cat_crypto", null, ["crypto"]);
+      loadNewsCategory("news_cat_forex", null, ["forex"]);
+      loadNewsCategory("news_cat_saham", null, ["saham"]);
+      loadNewsCategory("news_cat_dunia", null, ["dunia"]);
+      loadNewsCategory("news_cat_ekonomi", null, ["ekonomi"]);
+      loadInsightOpinionFeeds();
+    },
+    calendar: () => { renderHistoricalImpact(); loadWeekAhead("calendarWeekAheadList", 8); },
     jurnal: () => renderJournal(),
-    insight: () => { loadTvIdeas(); loadInsightOpinionFeeds(); },
+    insight: () => loadTvIdeas(),
   };
 
   function activateTab(tabName) {
@@ -848,10 +875,10 @@
     btn.addEventListener('click', () => activateTab(btn.dataset.tab));
   });
 
-  document.querySelectorAll('.subtab').forEach(btn => {
+  document.querySelectorAll('.subtab[data-sub]').forEach(btn => {
     btn.addEventListener('click', () => {
       const parent = btn.closest('.panel');
-      parent.querySelectorAll('.subtab').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.subtab[data-sub]').forEach(b => b.classList.remove('active'));
       parent.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.sub).classList.add('active');
