@@ -705,6 +705,7 @@ const RSS2JSON_API_KEY = "vvt7vomz1xastcqts3t87cccr00oupn0xidc87im";
 const RSS2JSON_API_KEY_2 = "fhl38do5h4uwn73vnyuevxkkhvqbshxz192utx9p";
 const KEY2_URLS = new Set([
   "https://cointelegraph.com/rss/category/analysis",
+  "https://www.tradingview.com/feed/",
 ]);
 const NEWS_CACHE_TTL_MS = 6 * 60 * 1000;
 const NEWS_FEED_CACHE = {};
@@ -887,7 +888,16 @@ function renderTvIdeas(category) {
   if (!el) return;
   const filtered = category === "semua" ? tvIdeasCache : tvIdeasCache.filter(x => x.category === category);
   if (filtered.length === 0) {
-    el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Belum ada ide di kategori ini pada batch data saat ini, coba lagi nanti atau pilih "Semua".</span></div>`;
+    const tvLink = {
+      crypto: "https://www.tradingview.com/markets/cryptocurrencies/ideas/",
+      forex: "https://www.tradingview.com/markets/currencies/ideas/",
+      saham: "https://www.tradingview.com/ideas/",
+      semua: "https://www.tradingview.com/ideas/",
+    }[category] || "https://www.tradingview.com/ideas/";
+    el.innerHTML = `<div class="mini-row" style="display:block;">
+      <span style="color:var(--text-dim);">Belum ada ide kategori ini di batch data terbaru (feed sumbernya cuma ~20 ide terbaru lintas semua instrumen, sudah dijelaskan di atas) — coba pilih "Semua", atau lihat langsung feed crypto/forex asli di TradingView (data real-time, di luar situs ini):</span>
+      <div style="margin-top:10px;"><a href="${tvLink}" target="_blank" rel="noopener" class="link-btn">Buka di TradingView.com →</a></div>
+    </div>`;
     return;
   }
   el.innerHTML = filtered.map(({ it, parsed, source }) => {
