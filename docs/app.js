@@ -968,31 +968,19 @@ async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    // TradingView Ideas asli (chart + coretan dari trader komunitas) + FXStreet
-    // (analisis/price forecast tertulis dari analis bank/strategist bernama asli,
-    // mis. "- UOB", "- Danske Bank" -- BUKAN artikel umum kayak CoinTelegraph yang
-    // sudah dikeluarkan dari sini). Kalau kategori tertentu (mis. Crypto) kosong
-    // sesaat, itu memang keterbatasan feed sumbernya (lihat note-box).
-    const [tvItems, fxItems] = await Promise.all([
-      fetchFeedCached("https://www.tradingview.com/feed/"),
-      fetchFeedCached("https://www.fxstreet.com/rss/news"),
-    ]);
+    // KHUSUS TradingView Ideas asli (chart + coretan dari TRADER komunitas).
+    // FXStreet (analis bank/institusi, bukan trader individual) sudah dipindah ke
+    // tab News > Analisis Fundamental -- tab ini murni untuk trader, sesuai
+    // permintaan eksplisit. Kalau kategori tertentu (mis. Crypto) kosong sesaat,
+    // itu memang keterbatasan feed sumbernya (lihat note-box), BUKAN diisi konten
+    // lain supaya kelihatan penuh.
+    const tvItems = await fetchFeedCached("https://www.tradingview.com/feed/");
     const fresh = tvItems.slice(0, 20).map(it => {
       const parsed = parseTvIdea(it);
       return { it, parsed, category: classifyInstrument(parsed.symbol, it.title), source: "TradingView" };
     });
-    const fxFresh = fxItems.slice(0, 15).map(it => {
-      const m = it.title.match(/[–-]\s*([A-Za-z .&]+)$/);
-      const analyst = m ? m[1].trim() : null;
-      return {
-        it,
-        parsed: { avatar: null, author: analyst, authorLink: null, symbol: null, chartImg: extractThumb(it) },
-        category: classifyInstrument(null, it.title),
-        source: "FXStreet",
-      };
-    });
     const seen = new Set();
-    const merged = [...fresh, ...fxFresh, ...loadTvIdeasPool().filter(x => x.source !== "CoinTelegraph")]
+    const merged = [...fresh, ...loadTvIdeasPool().filter(x => x.source === "TradingView" || !x.source)]
       .filter(x => (seen.has(x.it.link) ? false : (seen.add(x.it.link), true)))
       .sort((a, b) => new Date(b.it.pubDate) - new Date(a.it.pubDate));
     if (merged.length === 0) throw new Error("empty");
@@ -1014,6 +1002,7 @@ async function loadInsightOpinionFeeds() {
     ] },
     { el: "insight_forex_analysis", updEl: "insightForexUpdated", sources: [
       { name: "ForexLive", url: "https://www.forexlive.com/feed/centralbank" },
+      { name: "FXStreet", url: "https://www.fxstreet.com/rss/news" },
     ] },
   ];
   for (const target of targets) {
