@@ -637,9 +637,7 @@ async function loadOverviewNewsPreview() {
   const el = document.getElementById("ov_news");
   if (!el) return;
   try {
-    const feed = "https://cointelegraph.com/rss";
-    const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed));
-    const items = (data.items || []).slice(0, 3);
+    const items = (await fetchFeedCached("https://cointelegraph.com/rss")).slice(0, 3);
     if (items.length === 0) throw new Error("empty");
     el.innerHTML = items.map(n => `<div class="mini-row"><span>${n.title}</span></div>`).join("");
   } catch (e) {
@@ -683,8 +681,7 @@ async function loadRssFeeds() {
     const el = document.getElementById(elId);
     if (!el) continue;
     try {
-      const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl));
-      const items = (data.items || []).slice(0, 6);
+      const items = (await fetchFeedCached(feedUrl)).slice(0, 6);
       if (items.length === 0) throw new Error("empty");
       el.innerHTML = items.map(n => `<div class="mini-row"><a href="${n.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">${n.title}</a></div>`).join("");
     } catch (e) {
@@ -694,13 +691,29 @@ async function loadRssFeeds() {
 }
 
 function gnews(q) { return "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=en-US&gl=US&ceid=US:en"; }
+// Cache RSS di memori (sekali per sesi tab) + sessionStorage (bertahan lintas reload,
+// TTL 6 menit) supaya tidak boros kuota rss2json (free tier gampang kena rate-limit
+// 429 kalau banyak kategori dibuka sekaligus). Kalau fetch baru gagal, tetap pakai
+// data lama dari cache drpd nampilin "gagal memuat" -- data agak basi lebih baik
+// drpd kosong.
+const NEWS_CACHE_TTL_MS = 6 * 60 * 1000;
 const NEWS_FEED_CACHE = {};
 function fetchFeedCached(url) {
-  if (!NEWS_FEED_CACHE[url]) {
-    NEWS_FEED_CACHE[url] = fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
-      .then(d => d.items || [])
-      .catch(() => []);
+  if (NEWS_FEED_CACHE[url]) return NEWS_FEED_CACHE[url];
+  const cacheKey = "rsscache_" + url;
+  let cached = null;
+  try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null"); } catch (e) {}
+  if (cached && Date.now() - cached.ts < NEWS_CACHE_TTL_MS) {
+    NEWS_FEED_CACHE[url] = Promise.resolve(cached.items);
+    return NEWS_FEED_CACHE[url];
   }
+  NEWS_FEED_CACHE[url] = fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
+    .then(d => {
+      const items = d.items || [];
+      try { sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items })); } catch (e) {}
+      return items;
+    })
+    .catch(() => (cached ? cached.items : []));
   return NEWS_FEED_CACHE[url];
 }
 const NEWS_SOURCE_SETS = {
@@ -866,8 +879,7 @@ async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    const data = await fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.tradingview.com/feed/"));
-    const items = (data.items || []).slice(0, 20);
+    const items = (await fetchFeedCached("https://www.tradingview.com/feed/")).slice(0, 20);
     if (items.length === 0) throw new Error("empty");
     tvIdeasCache = items.map(it => {
       const parsed = parseTvIdea(it);
@@ -896,9 +908,7 @@ async function loadInsightOpinionFeeds() {
     if (!el) continue;
     try {
       const results = await Promise.all(target.sources.map(s =>
-        fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(s.url))
-          .then(data => (data.items || []).slice(0, 5).map(item => ({ ...item, sourceName: s.name })))
-          .catch(() => [])
+        fetchFeedCached(s.url).then(items => items.slice(0, 5).map(item => ({ ...item, sourceName: s.name })))
       ));
       const items = results.flat();
       if (items.length === 0) throw new Error("empty");
@@ -932,11 +942,9 @@ async function loadFundamentalNews() {
   if (!el) return;
   try {
     const feeds = ["https://www.coindesk.com/arc/outboundfeeds/rss/", "https://cointelegraph.com/rss"];
-    const results = await Promise.all(feeds.map(f =>
-      fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f)).catch(() => null)
-    ));
+    const results = await Promise.all(feeds.map(f => fetchFeedCached(f)));
     const allItems = [];
-    results.forEach(r => { if (r && r.items) allItems.push(...r.items); });
+    results.forEach(items => allItems.push(...items));
 
     const matches = [];
     COINS.forEach(sym => {
@@ -948,7 +956,15 @@ async function loadFundamentalNews() {
     });
 
     if (matches.length === 0) {
-      el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Belum ada berita terbaru dari CoinDesk/CoinTelegraph yang menyebut coin di watchlist ini secara spesifik.</span></div>`;
+      // Fallback: tidak ada judul yang cocok nama coin watchlist secara spesifik (wajar,
+      // altcoin market cap kecil jarang jadi headline) -- tampilkan berita crypto umum
+      // terbaru apa adanya, dilabeli jelas supaya tidak disangka "kosong/error".
+      const fallback = allItems.slice(0, 8);
+      el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);font-style:italic;">Tidak ada judul yang menyebut nama coin watchlist secara spesifik saat ini. Berita crypto umum terbaru:</span></div>` +
+        fallback.map(it => `
+        <div class="mini-row">
+          <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">${it.title}</a>
+        </div>`).join("");
     } else {
       el.innerHTML = matches.slice(0, 15).map(m => `
         <div class="mini-row">
@@ -976,9 +992,7 @@ async function loadTrendingCoins() {
   try {
     const [data, newsResults] = await Promise.all([
       fetchJson(`${CG_BASE}/search/trending`),
-      Promise.all(["https://www.coindesk.com/arc/outboundfeeds/rss/", "https://cointelegraph.com/rss"].map(f =>
-        fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f)).then(r => r.items || []).catch(() => [])
-      )),
+      Promise.all(["https://www.coindesk.com/arc/outboundfeeds/rss/", "https://cointelegraph.com/rss"].map(f => fetchFeedCached(f))),
     ]);
     const newsItems = newsResults.flat();
     const coins = (data.coins || []).slice(0, 8).map(c => c.item);
