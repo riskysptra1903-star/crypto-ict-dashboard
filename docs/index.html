@@ -143,6 +143,14 @@
   .coin-card-links { margin-top: 8px; display: flex; gap: 10px; }
   .coin-card-links a { font-size: 11px; color: #a7b3ff; text-decoration: none; }
   .coin-card-links a:hover { text-decoration: underline; }
+  .idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .idea-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .idea-card-img { width: 100%; height: 150px; object-fit: cover; background: var(--surface3, #1a1f2e); }
+  .idea-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .idea-card-title { color: var(--text); text-decoration: none; font-weight: 700; font-size: 13.5px; line-height: 1.4; }
+  .idea-card-title:hover { text-decoration: underline; }
+  .idea-card-snippet { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; flex: 1; }
+  .idea-card-meta { font-size: 10.5px; color: #a7b3ff; margin-top: auto; padding-top: 4px; border-top: 1px solid var(--border); }
   .link-btn {
     background: transparent; border: 1px solid var(--grad1); color: #a7b3ff; font-size: 11.5px;
     padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all .15s;
@@ -494,7 +502,7 @@
     <div class="card">
       <h3>Gabungan 5 Sumber, Urut Terbaru</h3>
       <span class="updated-tag" id="newsCombinedUpdated">terakhir update: -</span>
-      <div id="news_combined" style="margin-top:8px;"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div>
+      <div id="news_combined" class="idea-grid" style="margin-top:8px;"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div>
     </div>
     <div class="note-box">Sumber: CoinDesk, CoinTelegraph, ForexLive, MarketWatch, CNBC — semua RSS resmi masing-masing platform, digabung & diurutkan berdasarkan waktu publikasi. Investing.com, Reuters, DailyFX sudah dicek langsung (bukan diasumsikan) dan sampai saat ini tidak punya RSS publik gratis yang bisa diakses dari browser. Bloomberg tidak menyediakan RSS gratis untuk kontennya sendiri.</div>
   </div>
@@ -607,46 +615,29 @@
 <!-- INSIGHT -->
 <div id="tab-insight" class="panel">
   <div class="card">
-    <div class="warn-box"><b>Opini pihak ketiga, bukan rekomendasi dari dashboard ini.</b> Analisis di bawah ditulis oleh trader komunitas TradingView terverifikasi, nama author & tanggal tertera di tiap kartu ide.</div>
+    <div class="warn-box"><b>Opini pihak ketiga, bukan rekomendasi dari dashboard ini.</b> Setiap kartu di bawah menampilkan nama penulis, platform asal, dan tanggal publikasi asli — kami tidak menulis ulang atau menilai kebenarannya.</div>
   </div>
   <div class="card">
-    <h3>TradingView Ideas — BTCUSD</h3>
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-      { "feedMode": "symbol", "symbol": "BINANCE:BTCUSDT", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
-      </script>
-    </div>
-  </div>
-  <div class="card">
-    <h3>TradingView Ideas — EURUSD</h3>
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-      { "feedMode": "symbol", "symbol": "FX:EURUSD", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
-      </script>
-    </div>
-  </div>
-  <div class="card">
-    <h3>TradingView Ideas — XAUUSD</h3>
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-      { "feedMode": "symbol", "symbol": "TVC:GOLD", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400", "colorTheme": "dark", "locale": "id" }
-      </script>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Opini & Analisis — Crypto (CoinDesk/CoinTelegraph Opinion)</h3>
+    <h3>Ide & Analisis — Crypto</h3>
     <span class="updated-tag" id="insightCryptoUpdated">terakhir update: -</span>
-    <div id="insight_crypto_opinion"><div class="skeleton skeleton-row"></div></div>
+    <div id="insight_crypto_opinion" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
   </div>
   <div class="card">
-    <h3>Opini & Analisis — Forex (ForexLive)</h3>
+    <h3>Ide & Analisis — Forex</h3>
     <span class="updated-tag" id="insightForexUpdated">terakhir update: -</span>
-    <div id="insight_forex_analysis"><div class="skeleton skeleton-row"></div></div>
+    <div id="insight_forex_analysis" class="idea-grid"><div class="skeleton skeleton-row"></div></div>
   </div>
-  <div class="note-box">Investing.com & Reuters TIDAK dimasukkan sebagai sumber di sini — kedua platform sudah tidak menyediakan RSS publik gratis yang bisa diakses otomatis (sudah dicek langsung, bukan diasumsikan). Bloomberg juga tidak dipakai karena tidak ada RSS resmi gratis untuk kontennya.</div>
+  <div class="note-box">Sumber: kolom opini/analisis asli dari CoinDesk, CoinTelegraph, ForexLive. Investing.com & Reuters TIDAK dimasukkan — sudah dicek langsung, kedua platform tidak lagi menyediakan RSS publik gratis. Bloomberg juga tidak dipakai karena tidak ada RSS resmi gratis untuk kontennya.</div>
+  <div class="card">
+    <h3>Feed Simbol dari TradingView (bukan community "Ideas")</h3>
+    <div class="note-box">Catatan jujur: TradingView tidak menyediakan widget embed gratis untuk feed komunitas "Ideas" seperti di id.tradingview.com/ideas (chart+coretan analisis dari trader lain) — yang tersedia gratis cuma widget berita/timeline seperti di bawah ini. Untuk lihat ide komunitas asli dengan chart, kunjungi langsung tradingview.com/ideas.</div>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+      { "feedMode": "symbol", "symbol": "BINANCE:BTCUSDT", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "350", "colorTheme": "dark", "locale": "id" }
+      </script>
+    </div>
+  </div>
 </div>
 
 <!-- KALKULATOR RISIKO -->

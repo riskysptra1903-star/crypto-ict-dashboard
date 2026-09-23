@@ -673,14 +673,14 @@ async function loadCombinedNewsFeed() {
     items = items.slice(0, 24);
     el.innerHTML = items.map(it => {
       const thumb = extractThumb(it);
-      const snippet = stripHtml(it.description || "").slice(0, 140);
+      const snippet = stripHtml(it.description || "").slice(0, 110);
       return `
-      <div class="mini-row" style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
-        ${thumb ? `<img src="${thumb}" onerror="this.remove()" style="width:76px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;">` : ""}
-        <div style="min-width:0;">
-          <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;display:block;">${it.title}</a>
-          ${snippet ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${snippet}${snippet.length >= 140 ? "..." : ""}</div>` : ""}
-          <div style="font-size:10.5px;color:var(--accent);margin-top:3px;">${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
+      <div class="idea-card">
+        ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
+        <div class="idea-card-body">
+          <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
+          ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
+          <div class="idea-card-meta">${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
         </div>
       </div>`;
     }).join("");
@@ -740,12 +740,14 @@ async function loadInsightOpinionFeeds() {
       if (items.length === 0) throw new Error("empty");
       el.innerHTML = items.map(it => {
         const thumb = extractThumb(it);
+        const snippet = stripHtml(it.description || "").slice(0, 110);
         return `
-        <div class="mini-row" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);">
-          ${thumb ? `<img src="${thumb}" onerror="this.remove()" style="width:88px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;">` : ""}
-          <div style="min-width:0;">
-            <a href="${it.link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;">${it.title}</a>
-            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;">${it.author ? it.author + " · " : ""}${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
+        <div class="idea-card">
+          ${thumb ? `<img src="${thumb}" onerror="this.remove()" class="idea-card-img">` : ""}
+          <div class="idea-card-body">
+            <a href="${it.link}" target="_blank" rel="noopener" class="idea-card-title">${it.title}</a>
+            ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 110 ? "..." : ""}</div>` : ""}
+            <div class="idea-card-meta">${it.author ? "oleh " + it.author + " · " : ""}${it.sourceName} · ${fmtRssDate(it.pubDate)}</div>
           </div>
         </div>`;
       }).join("");
