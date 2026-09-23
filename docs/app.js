@@ -698,6 +698,14 @@ function gnews(q) { return "https://news.google.com/rss/search?q=" + encodeURICo
 // limit). Kalau fetch baru gagal, tetap pakai data lama dari cache drpd nampilin
 // "gagal memuat" -- data agak basi lebih baik drpd kosong.
 const RSS2JSON_API_KEY = "vvt7vomz1xastcqts3t87cccr00oupn0xidc87im";
+// Akun free rss2json dibatasi 25 feed unik SEUMUR HIDUP (bukan rate-limit, sudah
+// dicek langsung -- menghapus feed dari dashboard tidak membebaskan slot). Key 1
+// sudah penuh 25/25, jadi feed BARU (di luar 25 yang sudah ada) dialokasikan ke
+// akun ke-2 (KEY2_URLS) supaya tidak kena "using all available feeds".
+const RSS2JSON_API_KEY_2 = "fhl38do5h4uwn73vnyuevxkkhvqbshxz192utx9p";
+const KEY2_URLS = new Set([
+  "https://cointelegraph.com/rss/category/analysis",
+]);
 const NEWS_CACHE_TTL_MS = 6 * 60 * 1000;
 const NEWS_FEED_CACHE = {};
 function fetchFeedCached(url) {
@@ -709,8 +717,9 @@ function fetchFeedCached(url) {
     NEWS_FEED_CACHE[url] = Promise.resolve(cached.items);
     return NEWS_FEED_CACHE[url];
   }
+  const key = KEY2_URLS.has(url) ? RSS2JSON_API_KEY_2 : RSS2JSON_API_KEY;
   const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url) +
-    (RSS2JSON_API_KEY ? "&api_key=" + RSS2JSON_API_KEY : "");
+    (key ? "&api_key=" + key : "");
   NEWS_FEED_CACHE[url] = fetchJson(apiUrl)
     .then(d => {
       const items = d.items || [];
@@ -865,7 +874,7 @@ function renderTvIdeas(category) {
     el.innerHTML = `<div class="mini-row"><span style="color:var(--text-dim);">Belum ada ide di kategori ini pada batch data saat ini, coba lagi nanti atau pilih "Semua".</span></div>`;
     return;
   }
-  el.innerHTML = filtered.map(({ it, parsed }) => {
+  el.innerHTML = filtered.map(({ it, parsed, source }) => {
     const snippet = stripHtml(it.description || "").slice(0, 120);
     return `
     <div class="idea-card">
@@ -876,7 +885,7 @@ function renderTvIdeas(category) {
         ${snippet ? `<div class="idea-card-snippet">${snippet}${snippet.length >= 120 ? "..." : ""}</div>` : ""}
         <div class="idea-card-meta">
           ${parsed.avatar ? `<img src="${parsed.avatar}" onerror="this.remove()">` : ""}
-          ${parsed.author && parsed.authorLink ? `<a href="${parsed.authorLink}" target="_blank" rel="noopener">${parsed.author}</a>` : (parsed.author || "TradingView")}
+          ${parsed.author && parsed.authorLink ? `<a href="${parsed.authorLink}" target="_blank" rel="noopener">${parsed.author}</a>` : (parsed.author || source || "TradingView")}
           <span>· ${fmtRssDate(it.pubDate)}</span>
         </div>
       </div>
@@ -915,12 +924,25 @@ async function loadTvIdeas() {
   const el = document.getElementById("tv_ideas_grid");
   if (!el) return;
   try {
-    const fresh = (await fetchFeedCached("https://www.tradingview.com/feed/")).slice(0, 20).map(it => {
+    const [tvItems, ctAnalysisItems] = await Promise.all([
+      fetchFeedCached("https://www.tradingview.com/feed/"),
+      fetchFeedCached("https://cointelegraph.com/rss/category/analysis"),
+    ]);
+    const fresh = tvItems.slice(0, 20).map(it => {
       const parsed = parseTvIdea(it);
-      return { it, parsed, category: classifyInstrument(parsed.symbol, it.title) };
+      return { it, parsed, category: classifyInstrument(parsed.symbol, it.title), source: "TradingView" };
     });
+    // Pelengkap kategori Crypto: analisis tertulis CoinTelegraph (bukan chart trader
+    // TradingView, tapi tetap analisis teknikal/pasar crypto asli dengan penulis &
+    // tanggal jelas) -- dipakai karena TradingView Ideas sering kosong utk crypto.
+    const ctFresh = ctAnalysisItems.slice(0, 10).map(it => ({
+      it,
+      parsed: { avatar: null, author: null, authorLink: null, symbol: "Analisis Crypto — CoinTelegraph", chartImg: extractThumb(it) },
+      category: "crypto",
+      source: "CoinTelegraph",
+    }));
     const seen = new Set();
-    const merged = [...fresh, ...loadTvIdeasPool()]
+    const merged = [...fresh, ...ctFresh, ...loadTvIdeasPool()]
       .filter(x => (seen.has(x.it.link) ? false : (seen.add(x.it.link), true)))
       .sort((a, b) => new Date(b.it.pubDate) - new Date(a.it.pubDate));
     if (merged.length === 0) throw new Error("empty");
