@@ -692,10 +692,12 @@ async function loadRssFeeds() {
 
 function gnews(q) { return "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=en-US&gl=US&ceid=US:en"; }
 // Cache RSS di memori (sekali per sesi tab) + sessionStorage (bertahan lintas reload,
-// TTL 6 menit) supaya tidak boros kuota rss2json (free tier gampang kena rate-limit
-// 429 kalau banyak kategori dibuka sekaligus). Kalau fetch baru gagal, tetap pakai
-// data lama dari cache drpd nampilin "gagal memuat" -- data agak basi lebih baik
-// drpd kosong.
+// TTL 6 menit) supaya tidak boros kuota rss2json. RSS2JSON_API_KEY (akun gratis
+// riskysptra1903) menaikkan limit dari kuota anonim bersama (gampang 429) ke kuota
+// pribadi -- kalau kosong, tetap jalan tanpa key (fallback demo/anonim, lebih rawan
+// limit). Kalau fetch baru gagal, tetap pakai data lama dari cache drpd nampilin
+// "gagal memuat" -- data agak basi lebih baik drpd kosong.
+const RSS2JSON_API_KEY = "vvt7vomz1xastcqts3t87cccr00oupn0xidc87im";
 const NEWS_CACHE_TTL_MS = 6 * 60 * 1000;
 const NEWS_FEED_CACHE = {};
 function fetchFeedCached(url) {
@@ -707,7 +709,9 @@ function fetchFeedCached(url) {
     NEWS_FEED_CACHE[url] = Promise.resolve(cached.items);
     return NEWS_FEED_CACHE[url];
   }
-  NEWS_FEED_CACHE[url] = fetchJson("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url))
+  const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url) +
+    (RSS2JSON_API_KEY ? "&api_key=" + RSS2JSON_API_KEY : "");
+  NEWS_FEED_CACHE[url] = fetchJson(apiUrl)
     .then(d => {
       const items = d.items || [];
       try { sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items })); } catch (e) {}
@@ -720,6 +724,18 @@ const NEWS_SOURCE_SETS = {
   crypto: [
     { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/" },
     { name: "CoinTelegraph", url: "https://cointelegraph.com/rss" },
+    { name: "Decrypt", url: "https://decrypt.co/feed" },
+    { name: "The Block", url: "https://www.theblock.co/rss.xml" },
+    { name: "CryptoSlate", url: "https://cryptoslate.com/feed/" },
+    { name: "Bitcoin Magazine", url: "https://bitcoinmagazine.com/.rss/full/" },
+    { name: "NewsBTC", url: "https://www.newsbtc.com/feed/" },
+    { name: "CryptoPotato", url: "https://cryptopotato.com/feed/" },
+    { name: "U.Today", url: "https://u.today/rss" },
+    { name: "Blockworks", url: "https://blockworks.co/feed" },
+    { name: "Bitcoinist", url: "https://bitcoinist.com/feed/" },
+    { name: "AMBCrypto", url: "https://ambcrypto.com/feed/" },
+    { name: "CryptoNews", url: "https://cryptonews.com/news/feed/" },
+    { name: "The Daily Hodl", url: "https://dailyhodl.com/feed/" },
     { name: "Google News", url: gnews("bitcoin OR crypto OR cryptocurrency") },
   ],
   forex: [
