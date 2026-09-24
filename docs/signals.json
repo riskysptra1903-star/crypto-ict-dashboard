@@ -1,10 +1,10 @@
 {
-  "total": 9,
+  "total": 10,
   "wins": 3,
-  "losses": 6,
-  "open": 1,
-  "win_rate": 33.3,
-  "profit_factor": 1.25,
+  "losses": 7,
+  "open": 0,
+  "win_rate": 30.0,
+  "profit_factor": 1.07,
   "recent": [
     {
       "id": "",
@@ -16,10 +16,10 @@
       "tp": 0.7280250000000001,
       "sweep_ratio": 0.7896857373086221,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-09-23 09:36:00",
+      "exit_price": 0.7228100000000001,
+      "R": -1.0
     },
     {
       "id": "",
