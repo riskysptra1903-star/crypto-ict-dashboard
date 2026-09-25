@@ -2,10 +2,25 @@
   "total": 10,
   "wins": 3,
   "losses": 7,
-  "open": 0,
+  "open": 1,
   "win_rate": 30.0,
   "profit_factor": 1.07,
   "recent": [
+    {
+      "id": "",
+      "symbol": "WLDUSDT",
+      "dir": 1,
+      "entry_time": "2026-09-24 03:14:00",
+      "entry": 0.4119,
+      "sl": 0.411275,
+      "tp": 0.4134625,
+      "sweep_ratio": 0.3071479122434528,
+      "n_opp": 3,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
     {
       "id": "",
       "symbol": "ASTERUSDT",
