@@ -1,10 +1,10 @@
 {
-  "total": 33,
-  "wins": 10,
-  "losses": 23,
-  "open": 14,
-  "win_rate": 30.3,
-  "profit_factor": 1.09,
+  "total": 47,
+  "wins": 14,
+  "losses": 33,
+  "open": 1,
+  "win_rate": 29.8,
+  "profit_factor": 1.06,
   "recent": [
     {
       "id": "",
@@ -16,10 +16,10 @@
       "tp": 86.83749999999999,
       "sweep_ratio": 0.3769230769230786,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-02 21:24:00",
+      "exit_price": 86.477,
+      "R": -1.0
     },
     {
       "id": "",
@@ -31,10 +31,10 @@
       "tp": 3.297625,
       "sweep_ratio": 0.7408759124087569,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-02 14:09:00",
+      "exit_price": 3.32195,
+      "R": -1.0
     },
     {
       "id": "",
@@ -46,10 +46,10 @@
       "tp": 89.95375,
       "sweep_ratio": 0.6655922643029863,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-02 14:19:00",
+      "exit_price": 90.6485,
+      "R": -1.0
     },
     {
       "id": "",
@@ -61,25 +61,10 @@
       "tp": 0.2044475,
       "sweep_ratio": 0.3411523570940609,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
-    },
-    {
-      "id": "",
-      "symbol": "SUIUSDT",
-      "dir": -1,
-      "entry_time": "2026-10-02 14:04:00",
-      "entry": 1.2003,
-      "sl": 1.20395,
-      "tp": 1.191175,
-      "sweep_ratio": 0.6611806797853352,
-      "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-02 14:08:00",
+      "exit_price": 0.2044475,
+      "R": 2.5
     },
     {
       "id": "",
@@ -91,10 +76,25 @@
       "tp": 0.10497125,
       "sweep_ratio": 0.2651236191478163,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-02 14:05:00",
+      "exit_price": 0.1057395,
+      "R": -1.0
+    },
+    {
+      "id": "",
+      "symbol": "SUIUSDT",
+      "dir": -1,
+      "entry_time": "2026-10-02 14:04:00",
+      "entry": 1.2003,
+      "sl": 1.20395,
+      "tp": 1.191175,
+      "sweep_ratio": 0.6611806797853352,
+      "n_opp": 3,
+      "status": "LOSS",
+      "exit_time": "2026-10-02 14:05:00",
+      "exit_price": 1.20395,
+      "R": -1.0
     },
     {
       "id": "",
@@ -106,10 +106,10 @@
       "tp": 3.2745,
       "sweep_ratio": 0.4135021097046353,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-02 12:08:00",
+      "exit_price": 3.2745,
+      "R": 2.5
     },
     {
       "id": "",
@@ -121,10 +121,10 @@
       "tp": 0.00591375,
       "sweep_ratio": 0.6193029490616628,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-02 10:08:00",
+      "exit_price": 0.0059351,
+      "R": -1.0
     },
     {
       "id": "",
@@ -136,10 +136,10 @@
       "tp": 0.2437424999999999,
       "sweep_ratio": 0.6038820992092051,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-02 09:23:00",
+      "exit_price": 0.2437424999999999,
+      "R": 2.5
     },
     {
       "id": "",
@@ -150,6 +150,21 @@
       "sl": 70.202,
       "tp": 69.915,
       "sweep_ratio": 0.3299180327868908,
+      "n_opp": 2,
+      "status": "WIN",
+      "exit_time": "2026-10-02 09:14:00",
+      "exit_price": 69.915,
+      "R": 2.5
+    },
+    {
+      "id": "",
+      "symbol": "ASTERUSDT",
+      "dir": -1,
+      "entry_time": "2026-10-02 01:10:00",
+      "entry": 0.7404,
+      "sl": 0.740995,
+      "tp": 0.7389125,
+      "sweep_ratio": 0.4525252525252514,
       "n_opp": 2,
       "status": "OPEN",
       "exit_time": "NaT",
@@ -166,10 +181,10 @@
       "tp": 0.10269125,
       "sweep_ratio": 0.4052213393870575,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-01 23:05:00",
+      "exit_price": 0.1023535,
+      "R": -1.0
     },
     {
       "id": "",
@@ -203,21 +218,6 @@
     },
     {
       "id": "",
-      "symbol": "ETCUSDT",
-      "dir": 1,
-      "entry_time": "2026-10-01 11:05:00",
-      "entry": 8.881,
-      "sl": 8.87105,
-      "tp": 8.905875,
-      "sweep_ratio": 0.6682847896440035,
-      "n_opp": 3,
-      "status": "LOSS",
-      "exit_time": "2026-10-01 11:18:00",
-      "exit_price": 8.87105,
-      "R": -1.0
-    },
-    {
-      "id": "",
       "symbol": "AAVEUSDT",
       "dir": 1,
       "entry_time": "2026-10-01 11:05:00",
@@ -230,6 +230,21 @@
       "exit_time": "2026-10-01 11:19:00",
       "exit_price": 164.78125,
       "R": 2.5
+    },
+    {
+      "id": "",
+      "symbol": "ETCUSDT",
+      "dir": 1,
+      "entry_time": "2026-10-01 11:05:00",
+      "entry": 8.881,
+      "sl": 8.87105,
+      "tp": 8.905875,
+      "sweep_ratio": 0.6682847896440035,
+      "n_opp": 3,
+      "status": "LOSS",
+      "exit_time": "2026-10-01 11:18:00",
+      "exit_price": 8.87105,
+      "R": -1.0
     },
     {
       "id": "",
@@ -290,21 +305,6 @@
       "exit_time": "2026-09-30 23:05:00",
       "exit_price": 0.2663825,
       "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "SHIB1000USDT",
-      "dir": 1,
-      "entry_time": "2026-09-30 20:05:00",
-      "entry": 0.005725,
-      "sl": 0.0057168,
-      "tp": 0.0057455,
-      "sweep_ratio": 0.3051438535309483,
-      "n_opp": 2,
-      "status": "WIN",
-      "exit_time": "2026-09-30 20:20:00",
-      "exit_price": 0.0057455,
-      "R": 2.5
     }
   ]
 }
