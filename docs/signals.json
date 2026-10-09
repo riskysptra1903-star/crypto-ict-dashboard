@@ -1,11 +1,71 @@
 {
-  "total": 103,
-  "wins": 32,
-  "losses": 71,
-  "open": 8,
-  "win_rate": 31.1,
-  "profit_factor": 1.13,
+  "total": 111,
+  "wins": 34,
+  "losses": 77,
+  "open": 4,
+  "win_rate": 30.6,
+  "profit_factor": 1.1,
   "recent": [
+    {
+      "id": "",
+      "symbol": "ENAUSDT",
+      "dir": 1,
+      "entry_time": "2026-10-09 21:03:00",
+      "entry": 0.21488,
+      "sl": 0.214579,
+      "tp": 0.2156324999999999,
+      "sweep_ratio": 0.5760765550239184,
+      "n_opp": 2,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
+    {
+      "id": "",
+      "symbol": "XLMUSDT",
+      "dir": 1,
+      "entry_time": "2026-10-09 20:06:00",
+      "entry": 0.192,
+      "sl": 0.19178,
+      "tp": 0.19255,
+      "sweep_ratio": 0.3043478260869565,
+      "n_opp": 2,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
+    {
+      "id": "",
+      "symbol": "VVVUSDT",
+      "dir": 1,
+      "entry_time": "2026-10-09 12:05:00",
+      "entry": 22.551,
+      "sl": 22.50125,
+      "tp": 22.675375,
+      "sweep_ratio": 0.6642210809488959,
+      "n_opp": 3,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
+    {
+      "id": "",
+      "symbol": "ARBUSDT",
+      "dir": -1,
+      "entry_time": "2026-10-09 12:03:00",
+      "entry": 0.17933,
+      "sl": 0.1797115,
+      "tp": 0.17837625,
+      "sweep_ratio": 0.7344992050874335,
+      "n_opp": 2,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
     {
       "id": "",
       "symbol": "WLDUSDT",
@@ -16,10 +76,10 @@
       "tp": 0.4801999999999999,
       "sweep_ratio": 0.2736156351791532,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-09 01:09:00",
+      "exit_price": 0.4828599999999999,
+      "R": -1.0
     },
     {
       "id": "",
@@ -31,10 +91,10 @@
       "tp": 0.1395199999999999,
       "sweep_ratio": 0.2789984670413921,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-08 22:07:00",
+      "exit_price": 0.139268,
+      "R": -1.0
     },
     {
       "id": "",
@@ -46,10 +106,10 @@
       "tp": 0.0397312499999999,
       "sweep_ratio": 0.5303030303030295,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-08 14:07:00",
+      "exit_price": 0.0394915,
+      "R": -1.0
     },
     {
       "id": "",
@@ -61,10 +121,10 @@
       "tp": 0.21836375,
       "sweep_ratio": 0.6377204884667551,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-08 14:07:00",
+      "exit_price": 0.2158665,
+      "R": -1.0
     },
     {
       "id": "",
@@ -76,10 +136,10 @@
       "tp": 0.5176625,
       "sweep_ratio": 0.4804392587508578,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-08 14:35:00",
+      "exit_price": 0.511555,
+      "R": -1.0
     },
     {
       "id": "",
@@ -91,10 +151,10 @@
       "tp": 0.03951625,
       "sweep_ratio": 0.3301886792452762,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-08 13:12:00",
+      "exit_price": 0.03951625,
+      "R": 2.5
     },
     {
       "id": "",
@@ -106,10 +166,10 @@
       "tp": 0.3348625,
       "sweep_ratio": 0.4705882352941258,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-08 13:06:00",
+      "exit_price": 0.334355,
+      "R": -1.0
     },
     {
       "id": "",
@@ -121,10 +181,10 @@
       "tp": 0.21650625,
       "sweep_ratio": 0.3079096045197764,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-08 13:20:00",
+      "exit_price": 0.21650625,
+      "R": 2.5
     },
     {
       "id": "",
@@ -245,66 +305,6 @@
       "exit_time": "2026-10-08 02:10:00",
       "exit_price": 88.01124999999999,
       "R": 2.5
-    },
-    {
-      "id": "",
-      "symbol": "XRPUSDT",
-      "dir": 1,
-      "entry_time": "2026-10-07 22:06:00",
-      "entry": 1.4166,
-      "sl": 1.4152900000000002,
-      "tp": 1.419875,
-      "sweep_ratio": 0.5421245421245486,
-      "n_opp": 2,
-      "status": "LOSS",
-      "exit_time": "2026-10-07 22:08:00",
-      "exit_price": 1.4152900000000002,
-      "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "DOTUSDT",
-      "dir": -1,
-      "entry_time": "2026-10-07 22:04:00",
-      "entry": 1.1108,
-      "sl": 1.11233,
-      "tp": 1.106975,
-      "sweep_ratio": 0.4652567975830879,
-      "n_opp": 2,
-      "status": "LOSS",
-      "exit_time": "2026-10-07 22:07:00",
-      "exit_price": 1.11233,
-      "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "ICPUSDT",
-      "dir": -1,
-      "entry_time": "2026-10-07 22:03:00",
-      "entry": 3.177,
-      "sl": 3.1797500000000003,
-      "tp": 3.170125,
-      "sweep_ratio": 0.5139860139860113,
-      "n_opp": 2,
-      "status": "WIN",
-      "exit_time": "2026-10-07 22:08:00",
-      "exit_price": 3.170125,
-      "R": 2.5
-    },
-    {
-      "id": "",
-      "symbol": "ETCUSDT",
-      "dir": 1,
-      "entry_time": "2026-10-07 14:06:00",
-      "entry": 8.334,
-      "sl": 8.31515,
-      "tp": 8.381124999999999,
-      "sweep_ratio": 0.4573863636363564,
-      "n_opp": 3,
-      "status": "LOSS",
-      "exit_time": "2026-10-07 14:27:00",
-      "exit_price": 8.31515,
-      "R": -1.0
     }
   ]
 }
