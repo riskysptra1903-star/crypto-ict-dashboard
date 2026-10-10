@@ -1,10 +1,10 @@
 {
-  "total": 111,
+  "total": 115,
   "wins": 34,
-  "losses": 77,
-  "open": 4,
-  "win_rate": 30.6,
-  "profit_factor": 1.1,
+  "losses": 81,
+  "open": 0,
+  "win_rate": 29.6,
+  "profit_factor": 1.05,
   "recent": [
     {
       "id": "",
@@ -16,10 +16,10 @@
       "tp": 0.2156324999999999,
       "sweep_ratio": 0.5760765550239184,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-09 21:09:00",
+      "exit_price": 0.214579,
+      "R": -1.0
     },
     {
       "id": "",
@@ -31,10 +31,10 @@
       "tp": 0.19255,
       "sweep_ratio": 0.3043478260869565,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-09 20:07:00",
+      "exit_price": 0.19178,
+      "R": -1.0
     },
     {
       "id": "",
@@ -46,10 +46,10 @@
       "tp": 22.675375,
       "sweep_ratio": 0.6642210809488959,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-09 12:06:00",
+      "exit_price": 22.50125,
+      "R": -1.0
     },
     {
       "id": "",
@@ -61,10 +61,10 @@
       "tp": 0.17837625,
       "sweep_ratio": 0.7344992050874335,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-09 12:08:00",
+      "exit_price": 0.1797115,
+      "R": -1.0
     },
     {
       "id": "",
