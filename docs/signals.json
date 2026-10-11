@@ -1,11 +1,56 @@
 {
-  "total": 115,
-  "wins": 34,
-  "losses": 81,
-  "open": 4,
-  "win_rate": 29.6,
-  "profit_factor": 1.05,
+  "total": 119,
+  "wins": 35,
+  "losses": 84,
+  "open": 3,
+  "win_rate": 29.4,
+  "profit_factor": 1.04,
   "recent": [
+    {
+      "id": "",
+      "symbol": "WLFIUSDT",
+      "dir": -1,
+      "entry_time": "2026-10-11 00:06:00",
+      "entry": 0.05695,
+      "sl": 0.0569665,
+      "tp": 0.05690875,
+      "sweep_ratio": 0.3578274760383542,
+      "n_opp": 3,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
+    {
+      "id": "",
+      "symbol": "MNTUSDT",
+      "dir": -1,
+      "entry_time": "2026-10-10 23:12:00",
+      "entry": 0.5696,
+      "sl": 0.569785,
+      "tp": 0.5691375,
+      "sweep_ratio": 0.4000000000000234,
+      "n_opp": 3,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
+    {
+      "id": "",
+      "symbol": "SHIB1000USDT",
+      "dir": -1,
+      "entry_time": "2026-10-10 22:04:00",
+      "entry": 0.005454,
+      "sl": 0.00545555,
+      "tp": 0.005450125,
+      "sweep_ratio": 0.3822525597269708,
+      "n_opp": 2,
+      "status": "OPEN",
+      "exit_time": "NaT",
+      "exit_price": "",
+      "R": ""
+    },
     {
       "id": "",
       "symbol": "WLFIUSDT",
@@ -16,10 +61,10 @@
       "tp": 0.05707,
       "sweep_ratio": 0.4104938271605,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-10 14:19:00",
+      "exit_price": 0.0569579999999999,
+      "R": -1.0
     },
     {
       "id": "",
@@ -31,10 +76,10 @@
       "tp": 0.004030125,
       "sweep_ratio": 0.3090507726269461,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-10 12:13:00",
+      "exit_price": 0.00402435,
+      "R": -1.0
     },
     {
       "id": "",
@@ -46,10 +91,10 @@
       "tp": 12.877375,
       "sweep_ratio": 0.4039800995024875,
       "n_opp": 2,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "WIN",
+      "exit_time": "2026-10-10 11:11:00",
+      "exit_price": 12.877375,
+      "R": 2.5
     },
     {
       "id": "",
@@ -61,10 +106,10 @@
       "tp": 8.379249999999999,
       "sweep_ratio": 0.2989323843416182,
       "n_opp": 3,
-      "status": "OPEN",
-      "exit_time": "NaT",
-      "exit_price": "",
-      "R": ""
+      "status": "LOSS",
+      "exit_time": "2026-10-10 09:06:00",
+      "exit_price": 8.3691,
+      "R": -1.0
     },
     {
       "id": "",
@@ -259,51 +304,6 @@
       "status": "LOSS",
       "exit_time": "2026-10-08 12:07:00",
       "exit_price": 0.0786694999999999,
-      "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "TRXUSDT",
-      "dir": -1,
-      "entry_time": "2026-10-08 11:18:00",
-      "entry": 0.3351,
-      "sl": 0.335195,
-      "tp": 0.3348625,
-      "sweep_ratio": 0.5185185185185265,
-      "n_opp": 3,
-      "status": "LOSS",
-      "exit_time": "2026-10-08 11:19:00",
-      "exit_price": 0.335195,
-      "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "SKYUSDT",
-      "dir": 1,
-      "entry_time": "2026-10-08 11:04:00",
-      "entry": 0.07828,
-      "sl": 0.0781845,
-      "tp": 0.07851875,
-      "sweep_ratio": 0.4483985765124608,
-      "n_opp": 2,
-      "status": "LOSS",
-      "exit_time": "2026-10-08 11:05:00",
-      "exit_price": 0.0781845,
-      "R": -1.0
-    },
-    {
-      "id": "",
-      "symbol": "SUIUSDT",
-      "dir": -1,
-      "entry_time": "2026-10-08 02:07:00",
-      "entry": 1.1297,
-      "sl": 1.131025,
-      "tp": 1.1263875,
-      "sweep_ratio": 0.8446215139442331,
-      "n_opp": 3,
-      "status": "LOSS",
-      "exit_time": "2026-10-08 02:16:00",
-      "exit_price": 1.131025,
       "R": -1.0
     }
   ]
